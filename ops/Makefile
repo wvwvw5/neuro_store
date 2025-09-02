@@ -39,6 +39,8 @@ help:
 	@echo "  make up                    # Запуск в development режиме"
 	@echo "  make up ENV=production     # Запуск в production режиме"
 	@echo "  make logs SERVICE=backend  # Логи конкретного сервиса"
+	@echo "  make users                 # Показать всех пользователей"
+	@echo "  make admin                 # Создать админа"
 
 # Проверка переменных окружения
 check-env:
@@ -238,3 +240,20 @@ tools-down:
 	@echo "$(YELLOW)🛠️ Остановка инструментов...$(NC)"
 	docker compose -f $(COMPOSE_FILE) --profile tools down
 	@echo "$(GREEN)✅ Инструменты остановлены$(NC)"
+
+# Показать всех пользователей
+users:
+	@echo "$(YELLOW)👥 Пользователи в системе:$(NC)"
+	docker compose -f $(COMPOSE_FILE) exec db psql -U postgres -d neuro_store -c "SELECT id, email, first_name, last_name, is_active, created_at FROM users ORDER BY id;"
+
+# Создать админа
+admin:
+	@echo "$(YELLOW)🛡️ Создание администратора...$(NC)"
+	@read -p "Email: " email; \
+	read -s -p "Пароль: " password; \
+	echo; \
+	read -p "Имя: " first_name; \
+	read -p "Фамилия: " last_name; \
+	echo "$(GREEN)Создание пользователя...$(NC)"; \
+	curl -s -X POST http://localhost:8000/api/v1/auth/register -H "Content-Type: application/json" -d "{\"email\":\"$$email\",\"password\":\"$$password\",\"first_name\":\"$$first_name\",\"last_name\":\"$$last_name\"}" | python3 -m json.tool; \
+	echo "$(GREEN)✅ Пользователь создан!$(NC)"

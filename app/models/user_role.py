@@ -11,7 +11,7 @@ class UserRole(Base):
     id = Column(BigInteger, primary_key=True, index=True)
     user_id = Column(BigInteger, ForeignKey("users.id", ondelete="RESTRICT", onupdate="CASCADE"), nullable=False, comment="ID пользователя")
     role_id = Column(BigInteger, ForeignKey("roles.id", ondelete="RESTRICT", onupdate="CASCADE"), nullable=False, comment="ID роли")
-    assigned_at = Column(DateTime(timezone=True), server_default=func.now(), comment="Дата назначения роли")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="Дата назначения роли")
 
     # Связи
     user = relationship("User", back_populates="user_roles")
