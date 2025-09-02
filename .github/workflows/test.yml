@@ -114,6 +114,7 @@ jobs:
     - name: 🔄 Run database migrations
       run: |
         echo "Running Alembic migrations..."
+        cd app
         alembic upgrade head
       env:
         DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/neuro_store_test
@@ -177,7 +178,8 @@ jobs:
       with:
         name: test-logs-python-${{ matrix.python-version }}
         path: |
-          *.log
+          app/*.log
+          tests/*.log
           pytest.log
         retention-days: 7
 
@@ -242,7 +244,7 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: 📤 Upload Trivy scan results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'

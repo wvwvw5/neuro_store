@@ -13,7 +13,6 @@ from app.schemas.payment import (
     BalanceTopUpRequest,
     BalanceTopUpResponse,
     CardVerificationRequest,
-    CardVerificationResponse,
     PaymentStatus
 )
 from app.core.logging_config import get_logger
