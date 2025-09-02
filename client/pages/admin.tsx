@@ -33,6 +33,7 @@ interface User {
 export default function AdminPanel() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [topupStats, setTopupStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('stats');
@@ -94,6 +95,18 @@ export default function AdminPanel() {
       if (response.ok) {
         const data = await response.json();
         setStats(data);
+      }
+
+        // Загружаем статистику пополнений
+  const topupResponse = await fetch('http://localhost:8000/api/v1/topup-statistics', {
+        headers: {
+          'Authorization': `${tokenType} ${token}`,
+        },
+      });
+
+      if (topupResponse.ok) {
+        const topupData = await topupResponse.json();
+        setTopupStats(topupData);
       }
     } catch (err) {
       console.error('Ошибка загрузки статистики:', err);
@@ -279,6 +292,46 @@ export default function AdminPanel() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Статистика пополнений */}
+                  {topupStats && (
+                    <div className="mt-8">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-4">Статистика пополнений</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                          <div className="flex items-center">
+                            <div className="text-3xl mr-4">💳</div>
+                            <div>
+                              <h4 className="text-lg font-semibold text-yellow-900">Общая сумма пополнений</h4>
+                              <p className="text-2xl font-bold text-yellow-600">{topupStats.total_topups} ₽</p>
+                              <p className="text-sm text-yellow-700">
+                                Количество пополнений: {topupStats.topup_count}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                          <div className="flex items-center">
+                            <div className="text-3xl mr-4">📊</div>
+                            <div>
+                              <h4 className="text-lg font-semibold text-orange-900">Статистика по месяцам</h4>
+                              <p className="text-sm text-orange-700">
+                                Последние 12 месяцев
+                              </p>
+                              {topupStats.monthly_statistics && topupStats.monthly_statistics.length > 0 && (
+                                <div className="mt-2">
+                                  <p className="text-lg font-bold text-orange-600">
+                                    {topupStats.monthly_statistics[0].month}: {topupStats.monthly_statistics[0].total} ₽
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -24,7 +24,7 @@ from app.core.exceptions import (
 )
 from app.core.limiter import init_limiter, close_limiter
 from app.services.cache import init_cache, close_cache
-from app.api.v1 import auth, products, subscriptions, admin, roles
+from app.api.v1 import auth, products, subscriptions, admin, roles, payments
 
 # Настройка логирования
 configure_logging()
@@ -134,8 +134,9 @@ def create_application() -> FastAPI:
         CORSMiddleware,
         allow_origins=cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
+        expose_headers=["*"],
     )
 
     # Регистрация обработчиков ошибок
@@ -152,6 +153,7 @@ def create_application() -> FastAPI:
     app.include_router(subscriptions.router, prefix=settings.API_V1_STR)
     app.include_router(admin.router, prefix=settings.API_V1_STR)
     app.include_router(roles.router, prefix=settings.API_V1_STR)
+    app.include_router(payments.router, prefix=settings.API_V1_STR)
 
     return app
 
@@ -218,7 +220,8 @@ async def api_health_check():
             "products": "✅ Доступна", 
             "subscriptions": "✅ Доступна",
             "admin": "✅ Доступна",
-            "roles": "✅ Доступна"
+            "roles": "✅ Доступна",
+            "payments": "✅ Доступна"
         }
     }
 

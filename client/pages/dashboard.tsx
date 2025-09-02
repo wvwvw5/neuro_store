@@ -12,12 +12,14 @@ interface UserInfo {
   last_name: string;
   phone?: string;
   is_active: boolean;
+  is_admin?: boolean;
   created_at: string;
 }
 
 export default function Dashboard() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [userBalance, setUserBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -56,6 +58,26 @@ export default function Dashboard() {
       }
 
       const userData = await userResponse.json();
+      
+      // Проверяем, является ли пользователь админом
+      try {
+        const rolesResponse = await fetch('http://localhost:8000/api/v1/auth/me/roles', {
+          headers: {
+            'Authorization': `${tokenType} ${token}`,
+          },
+        });
+        
+        if (rolesResponse.ok) {
+          const rolesData = await rolesResponse.json();
+          const isAdmin = rolesData.some((role: any) => role.role_name === 'admin');
+          userData.is_admin = isAdmin;
+        }
+      } catch (err) {
+        console.error('Ошибка получения ролей:', err);
+        userData.is_admin = false;
+      }
+      
+
       setUser(userData);
 
       // Получаем подписки пользователя
@@ -68,6 +90,18 @@ export default function Dashboard() {
       if (subscriptionsResponse.ok) {
         const subscriptionsData = await subscriptionsResponse.json();
         setSubscriptions(subscriptionsData);
+      }
+
+      // Получаем баланс пользователя
+              const balanceResponse = await fetch('http://localhost:8000/api/v1/balance', {
+        headers: {
+          'Authorization': `${tokenType} ${token}`,
+        },
+      });
+
+      if (balanceResponse.ok) {
+        const balanceData = await balanceResponse.json();
+        setUserBalance(balanceData.balance);
       }
 
     } catch (err) {
@@ -215,6 +249,20 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+
+          {/* Баланс (только для обычных пользователей) */}
+          {user && !user.is_admin && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Баланс</h2>
+              <div className="text-4xl font-bold text-green-600 mb-4">{userBalance} ₽</div>
+              <button
+                onClick={() => window.location.href = '/topup-balance'}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                💳 Пополнить баланс
+              </button>
+            </div>
+          )}
 
           {/* Подписки */}
           <div className="bg-white rounded-lg shadow-md p-6">

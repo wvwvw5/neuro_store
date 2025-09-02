@@ -10,8 +10,8 @@ class Order(Base):
 
     id = Column(BigInteger, primary_key=True, index=True)
     user_id = Column(BigInteger, ForeignKey("users.id", ondelete="RESTRICT", onupdate="CASCADE"), nullable=False, comment="ID пользователя")
-    product_id = Column(BigInteger, ForeignKey("products.id", ondelete="RESTRICT", onupdate="CASCADE"), nullable=False, comment="ID продукта")
-    plan_id = Column(BigInteger, ForeignKey("plans.id", ondelete="RESTRICT", onupdate="CASCADE"), nullable=False, comment="ID плана")
+    product_id = Column(BigInteger, ForeignKey("products.id", ondelete="RESTRICT", onupdate="CASCADE"), nullable=True, comment="ID продукта (NULL для пополнения баланса)")
+    plan_id = Column(BigInteger, ForeignKey("plans.id", ondelete="RESTRICT", onupdate="CASCADE"), nullable=True, comment="ID плана (NULL для пополнения баланса)")
     status = Column(String(50), nullable=False, default="pending", comment="Статус заказа")
     amount = Column(Numeric(12, 2), nullable=False, comment="Сумма заказа")
     currency = Column(String(3), default="RUB", comment="Валюта заказа")
