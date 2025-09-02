@@ -67,6 +67,7 @@ services:
       - PROJECT_DESCRIPTION=${PROJECT_DESCRIPTION:-API для магазина подписок на нейросетевые сервисы}
     volumes:
       - ../app:/app/app
+      - ../tests:/app/tests
       - ../alembic.ini:/app/alembic.ini
       - ../alembic:/app/alembic
       - ../requirements.txt:/app/requirements.txt

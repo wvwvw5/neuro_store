@@ -207,9 +207,11 @@ def get_subscription_status(
         status=subscription.status,
         start_date=subscription.start_date,
         end_date=subscription.end_date,
-        days_left=(subscription.end_date - datetime.utcnow()).days
-        if subscription.status == "active"
-        else 0,
+        days_left=(
+            (subscription.end_date - datetime.utcnow()).days
+            if subscription.status == "active"
+            else 0
+        ),
         requests_used=subscription.requests_used,
         auto_renew=subscription.auto_renew,
     )

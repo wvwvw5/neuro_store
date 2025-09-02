@@ -17,9 +17,9 @@ class TestAuthentication:
     def test_register_success(self, client: TestClient, db_session: Session):
         """Тест успешной регистрации"""
         user_data = create_test_user_data("register@example.com")
-        
+
         response = client.post("/api/v1/auth/register", json=user_data)
-        
+
         assert response.status_code == 201
         data = response.json()
         assert data["email"] == user_data["email"]
@@ -33,9 +33,9 @@ class TestAuthentication:
     def test_register_duplicate_email(self, client: TestClient, test_user: User):
         """Тест регистрации с существующим email"""
         user_data = create_test_user_data(test_user.email)
-        
+
         response = client.post("/api/v1/auth/register", json=user_data)
-        
+
         assert response.status_code == 400
         error_data = response.json()
         assert "error" in error_data
@@ -45,9 +45,9 @@ class TestAuthentication:
     def test_register_invalid_email(self, client: TestClient):
         """Тест регистрации с невалидным email"""
         user_data = create_test_user_data("invalid-email")
-        
+
         response = client.post("/api/v1/auth/register", json=user_data)
-        
+
         assert response.status_code == 422
         error_data = response.json()
         assert "error" in error_data
@@ -58,9 +58,9 @@ class TestAuthentication:
         """Тест регистрации со слабым паролем"""
         user_data = create_test_user_data()
         user_data["password"] = "123"  # Слишком короткий
-        
+
         response = client.post("/api/v1/auth/register", json=user_data)
-        
+
         assert response.status_code == 422
         error_data = response.json()
         assert "error" in error_data
@@ -70,12 +70,9 @@ class TestAuthentication:
         """Тест успешного входа"""
         response = client.post(
             "/api/v1/auth/login",
-            data={
-                "username": test_user.email,
-                "password": "testpass123"
-            }
+            data={"username": test_user.email, "password": "testpass123"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
@@ -87,12 +84,9 @@ class TestAuthentication:
         """Тест входа с неверным паролем"""
         response = client.post(
             "/api/v1/auth/login",
-            data={
-                "username": test_user.email,
-                "password": "wrongpassword"
-            }
+            data={"username": test_user.email, "password": "wrongpassword"},
         )
-        
+
         assert response.status_code == 401
         error_data = response.json()
         assert "error" in error_data
@@ -103,21 +97,20 @@ class TestAuthentication:
         """Тест входа с несуществующим пользователем"""
         response = client.post(
             "/api/v1/auth/login",
-            data={
-                "username": "nonexistent@example.com",
-                "password": "somepassword"
-            }
+            data={"username": "nonexistent@example.com", "password": "somepassword"},
         )
-        
+
         assert response.status_code == 401
         error_data = response.json()
         assert "error" in error_data
 
     @pytest.mark.auth
-    def test_get_current_user_success(self, client: TestClient, test_user: User, auth_headers: dict):
+    def test_get_current_user_success(
+        self, client: TestClient, test_user: User, auth_headers: dict
+    ):
         """Тест получения информации о текущем пользователе"""
         response = client.get("/api/v1/auth/me", headers=auth_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == test_user.email
@@ -128,7 +121,7 @@ class TestAuthentication:
     def test_get_current_user_no_token(self, client: TestClient):
         """Тест получения пользователя без токена"""
         response = client.get("/api/v1/auth/me")
-        
+
         assert response.status_code == 401
         error_data = response.json()
         assert "error" in error_data
@@ -138,16 +131,18 @@ class TestAuthentication:
         """Тест получения пользователя с невалидным токеном"""
         headers = {"Authorization": "bearer invalid_token"}
         response = client.get("/api/v1/auth/me", headers=headers)
-        
+
         assert response.status_code == 401
         error_data = response.json()
         assert "error" in error_data
 
     @pytest.mark.auth
-    def test_get_user_roles(self, client: TestClient, test_user: User, auth_headers: dict):
+    def test_get_user_roles(
+        self, client: TestClient, test_user: User, auth_headers: dict
+    ):
         """Тест получения ролей пользователя"""
         response = client.get("/api/v1/auth/me/roles", headers=auth_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "roles" in data
@@ -165,10 +160,10 @@ class TestAuthentication:
                 "/api/v1/auth/login",
                 data={
                     "username": test_user.email,
-                    "password": "wrongpassword"  # Неверный пароль
-                }
+                    "password": "wrongpassword",  # Неверный пароль
+                },
             )
-            
+
             if i < 5:
                 # Первые 5 запросов должны проходить (но с ошибкой 401)
                 assert response.status_code == 401
@@ -181,10 +176,12 @@ class TestRoleBasedAccess:
     """Тесты ролевого доступа"""
 
     @pytest.mark.admin
-    def test_admin_protected_route_success(self, client: TestClient, admin_headers: dict):
+    def test_admin_protected_route_success(
+        self, client: TestClient, admin_headers: dict
+    ):
         """Тест доступа админа к защищенному эндпоинту"""
         response = client.get("/api/v1/admin/protected-route", headers=admin_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
@@ -192,10 +189,12 @@ class TestRoleBasedAccess:
         assert data["access_level"] == "admin"
 
     @pytest.mark.admin
-    def test_admin_protected_route_forbidden(self, client: TestClient, auth_headers: dict):
+    def test_admin_protected_route_forbidden(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Тест запрета доступа обычного пользователя к админ эндпоинту"""
         response = client.get("/api/v1/admin/protected-route", headers=auth_headers)
-        
+
         assert response.status_code == 403
         error_data = response.json()
         assert "error" in error_data
@@ -205,7 +204,7 @@ class TestRoleBasedAccess:
     def test_admin_statistics(self, client: TestClient, admin_headers: dict):
         """Тест получения статистики админом"""
         response = client.get("/api/v1/admin/statistics", headers=admin_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "users" in data
@@ -214,10 +213,12 @@ class TestRoleBasedAccess:
         assert isinstance(data["users"]["total"], int)
 
     @pytest.mark.admin
-    def test_admin_users_list(self, client: TestClient, admin_headers: dict, test_user: User):
+    def test_admin_users_list(
+        self, client: TestClient, admin_headers: dict, test_user: User
+    ):
         """Тест получения списка пользователей админом"""
         response = client.get("/api/v1/admin/users", headers=admin_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)

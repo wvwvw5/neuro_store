@@ -49,10 +49,10 @@ def db_session() -> Generator[Session, None, None]:
     """Создание тестовой сессии БД с откатом после каждого теста"""
     # Создаем таблицы
     Base.metadata.create_all(bind=test_engine)
-    
+
     # Создаем сессию
     session = TestingSessionLocal()
-    
+
     try:
         yield session
     finally:
@@ -64,11 +64,13 @@ def db_session() -> Generator[Session, None, None]:
 @pytest.fixture(scope="function")
 def override_get_db(db_session: Session):
     """Переопределение зависимости get_db для тестов"""
+
     def _override_get_db():
         try:
             yield db_session
         finally:
             pass
+
     return _override_get_db
 
 
@@ -110,7 +112,7 @@ def test_user(db_session: Session) -> User:
         last_name="Пользователь",
         balance=1000.00,
         is_active=True,
-        is_verified=True
+        is_verified=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -122,14 +124,10 @@ def test_user(db_session: Session) -> User:
 def test_admin(db_session: Session) -> User:
     """Создание тестового администратора"""
     # Создаем роль админа
-    admin_role = Role(
-        name="admin",
-        description="Администратор системы",
-        is_active=True
-    )
+    admin_role = Role(name="admin", description="Администратор системы", is_active=True)
     db_session.add(admin_role)
     db_session.flush()
-    
+
     # Создаем пользователя-админа
     admin_user = User(
         email="admin@example.com",
@@ -138,19 +136,16 @@ def test_admin(db_session: Session) -> User:
         last_name="Тестовый",
         balance=10000.00,
         is_active=True,
-        is_verified=True
+        is_verified=True,
     )
     db_session.add(admin_user)
     db_session.flush()
-    
+
     # Назначаем роль
-    user_role = UserRole(
-        user_id=admin_user.id,
-        role_id=admin_role.id
-    )
+    user_role = UserRole(user_id=admin_user.id, role_id=admin_role.id)
     db_session.add(user_role)
     db_session.commit()
-    
+
     db_session.refresh(admin_user)
     return admin_user
 
@@ -163,7 +158,7 @@ def test_product(db_session: Session) -> Product:
         description="Тестовая нейросеть",
         category="Тестирование",
         api_endpoint="https://api.test.com/v1/test",
-        is_active=True
+        is_active=True,
     )
     db_session.add(product)
     db_session.commit()
@@ -181,7 +176,7 @@ def test_plan(db_session: Session) -> Plan:
         duration_days=30,
         max_requests_per_month=100,
         features="Тестовые функции",
-        is_active=True
+        is_active=True,
     )
     db_session.add(plan)
     db_session.commit()
@@ -190,12 +185,12 @@ def test_plan(db_session: Session) -> Plan:
 
 
 @pytest.fixture(scope="function")
-def test_product_plan(db_session: Session, test_product: Product, test_plan: Plan) -> ProductPlan:
+def test_product_plan(
+    db_session: Session, test_product: Product, test_plan: Plan
+) -> ProductPlan:
     """Создание связи продукт-план для тестов"""
     product_plan = ProductPlan(
-        product_id=test_product.id,
-        plan_id=test_plan.id,
-        is_available=True
+        product_id=test_product.id, plan_id=test_plan.id, is_available=True
     )
     db_session.add(product_plan)
     db_session.commit()
@@ -208,10 +203,7 @@ def auth_token(client: TestClient, test_user: User) -> str:
     """Получение токена аутентификации для тестового пользователя"""
     response = client.post(
         "/api/v1/auth/login",
-        data={
-            "username": test_user.email,
-            "password": "testpass123"
-        }
+        data={"username": test_user.email, "password": "testpass123"},
     )
     assert response.status_code == 200
     token_data = response.json()
@@ -223,10 +215,7 @@ def admin_token(client: TestClient, test_admin: User) -> str:
     """Получение токена аутентификации для тестового админа"""
     response = client.post(
         "/api/v1/auth/login",
-        data={
-            "username": test_admin.email,
-            "password": "adminpass123"
-        }
+        data={"username": test_admin.email, "password": "adminpass123"},
     )
     assert response.status_code == 200
     token_data = response.json()
@@ -247,6 +236,7 @@ def admin_headers(admin_token: str) -> dict:
 
 # Хелперы для создания тестовых данных
 
+
 def create_test_user_data(email: str = "newuser@example.com") -> dict:
     """Создание данных для тестового пользователя"""
     return {
@@ -254,7 +244,7 @@ def create_test_user_data(email: str = "newuser@example.com") -> dict:
         "password": "newpass123",
         "first_name": "Новый",
         "last_name": "Пользователь",
-        "phone": "+7 (999) 123-45-67"
+        "phone": "+7 (999) 123-45-67",
     }
 
 
@@ -264,13 +254,10 @@ def create_test_product_data(name: str = "Test Product") -> dict:
         "name": name,
         "description": "Описание тестового продукта",
         "category": "Тестирование",
-        "api_endpoint": "https://api.test.com/v1/endpoint"
+        "api_endpoint": "https://api.test.com/v1/endpoint",
     }
 
 
 def create_test_subscription_data(product_id: int, plan_id: int) -> dict:
     """Создание данных для тестовой подписки"""
-    return {
-        "product_id": product_id,
-        "plan_id": plan_id
-    }
+    return {"product_id": product_id, "plan_id": plan_id}
