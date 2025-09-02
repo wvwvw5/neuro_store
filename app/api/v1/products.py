@@ -1,21 +1,22 @@
 from typing import Any, List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
 from app.core.config import settings
+from app.core.database import get_db
 from app.core.logging_config import get_logger
-from app.models.user import User
-from app.models.product import Product
-from app.models.plan import Plan
-from app.models.product_plan import ProductPlan
 from app.dependencies.roles import require_admin
+from app.models.plan import Plan
+from app.models.product import Product
+from app.models.product_plan import ProductPlan
+from app.models.user import User
 from app.schemas.product import (
-    ProductCreate,
-    ProductUpdate,
-    ProductResponse,
     PlanResponse,
+    ProductCreate,
+    ProductResponse,
+    ProductUpdate,
 )
 from app.services.cache import cache, invalidate_products_cache
 

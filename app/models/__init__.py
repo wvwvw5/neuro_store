@@ -1,16 +1,16 @@
 # Models package
 
-from .user import User
-from .role import Role
-from .user_role import UserRole
-from .product import Product
-from .plan import Plan
-from .product_plan import ProductPlan
-from .subscription import Subscription
+from .audit_log import AuditLog
 from .order import Order
 from .payment import Payment
+from .plan import Plan
+from .product import Product
+from .product_plan import ProductPlan
+from .role import Role
+from .subscription import Subscription
 from .usage_event import UsageEvent
-from .audit_log import AuditLog
+from .user import User
+from .user_role import UserRole
 
 __all__ = [
     "User",

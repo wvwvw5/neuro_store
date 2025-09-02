@@ -6,9 +6,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models.user import User
 from app.models.product_plan import ProductPlan
 from app.models.subscription import Subscription
+from app.models.user import User
 from tests.conftest import create_test_subscription_data
 
 

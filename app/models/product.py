@@ -1,6 +1,7 @@
-from sqlalchemy import Column, BigInteger, String, Text, Boolean, DateTime
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.core.database import Base
 
 

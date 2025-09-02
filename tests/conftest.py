@@ -4,25 +4,26 @@
 
 import asyncio
 from typing import AsyncGenerator, Generator
+
+import fakeredis.aioredis as fakeredis
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
-import fakeredis.aioredis as fakeredis
 
-from app.main import app
 from app.core.database import Base, get_db
 from app.core.security import get_password_hash
-from app.models.user import User
-from app.models.role import Role
-from app.models.user_role import UserRole
-from app.models.product import Product
+from app.main import app
 from app.models.plan import Plan
+from app.models.product import Product
 from app.models.product_plan import ProductPlan
+from app.models.role import Role
+from app.models.user import User
+from app.models.user_role import UserRole
 
 # Настройка тестовой базы данных в памяти
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"

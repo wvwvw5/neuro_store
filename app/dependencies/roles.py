@@ -3,13 +3,14 @@
 """
 
 from typing import List
+
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
 from app.api.v1.auth import get_current_user_from_token
-from app.models.user import User
+from app.core.database import get_db
 from app.models.role import Role
+from app.models.user import User
 from app.models.user_role import UserRole
 
 

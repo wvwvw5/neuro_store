@@ -1,5 +1,6 @@
 from datetime import timedelta
 from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi_limiter.depends import RateLimiter
@@ -7,15 +8,15 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.logging_config import get_logger, log_auth_event
 from app.core.security import (
-    verify_password,
     create_access_token,
     get_password_hash,
+    verify_password,
     verify_token,
 )
-from app.core.logging_config import get_logger, log_auth_event
-from app.models.user import User
 from app.models.role import Role
+from app.models.user import User
 from app.models.user_role import UserRole
 from app.schemas.auth import Token, UserCreate, UserResponse
 

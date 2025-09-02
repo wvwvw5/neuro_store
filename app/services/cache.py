@@ -2,9 +2,9 @@
 Сервис кэширования для Neuro Store API
 """
 
-import json
 import functools
-from typing import Optional, Callable
+import json
+from typing import Callable, Optional
 
 import redis.asyncio as redis
 

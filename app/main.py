@@ -6,25 +6,25 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError
 from sqlalchemy.exc import IntegrityError, OperationalError
 
+from app.api.v1 import admin, auth, payments, products, roles, subscriptions
 from app.core.config import settings
-from app.core.logging_config import configure_logging, get_logger, log_request
 from app.core.exceptions import (
-    validation_exception_handler,
-    jwt_exception_handler,
-    integrity_exception_handler,
-    operational_exception_handler,
-    generic_exception_handler,
-    neuro_store_exception_handler,
     NeuroStoreException,
+    generic_exception_handler,
+    integrity_exception_handler,
+    jwt_exception_handler,
+    neuro_store_exception_handler,
+    operational_exception_handler,
+    validation_exception_handler,
 )
-from app.core.limiter import init_limiter, close_limiter
-from app.services.cache import init_cache, close_cache
-from app.api.v1 import auth, products, subscriptions, admin, roles, payments
+from app.core.limiter import close_limiter, init_limiter
+from app.core.logging_config import configure_logging, get_logger, log_request
+from app.services.cache import close_cache, init_cache
 
 # Настройка логирования
 configure_logging()
