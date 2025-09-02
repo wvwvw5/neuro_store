@@ -118,7 +118,7 @@ def get_admin_statistics(
 ) -> Any:
     """Получение статистики для админов и модераторов"""
     total_users = db.query(User).count()
-    active_users = db.query(User).filter(User.is_active == True).count()
+    active_users = db.query(User).filter(User.is_active).count()
     total_subscriptions = db.query(Subscription).count()
     active_subscriptions = db.query(Subscription).filter(Subscription.status == "active").count()
     total_orders = db.query(Order).count()

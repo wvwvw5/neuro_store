@@ -14,7 +14,6 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from app.core.config import settings
 from app.core.logging_config import configure_logging, get_logger, log_request
 from app.core.exceptions import (
-    http_exception_handler,
     validation_exception_handler,
     jwt_exception_handler,
     integrity_exception_handler,
@@ -192,6 +191,7 @@ async def health_check():
     
     # Проверяем Redis
     try:
+        from app.services.cache import redis_client
         if redis_client:
             await redis_client.ping()
             health_status["redis"] = "connected"

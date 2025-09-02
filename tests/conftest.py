@@ -6,6 +6,7 @@ import asyncio
 from typing import AsyncGenerator, Generator
 import pytest
 import pytest_asyncio
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy import create_engine
@@ -15,7 +16,6 @@ import fakeredis.aioredis as fakeredis
 
 from app.main import app
 from app.core.database import Base, get_db
-from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models.user import User
 from app.models.role import Role

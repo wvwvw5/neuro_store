@@ -5,15 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.config import settings
-from app.core.logging_config import get_logger, log_error
+from app.core.logging_config import get_logger
 from app.models.user import User
 from app.models.product import Product
 from app.models.plan import Plan
 from app.models.product_plan import ProductPlan
-from app.api.v1.auth import get_current_user_from_token
 from app.dependencies.roles import require_admin
 from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse, PlanResponse
-from app.services.cache import cache, invalidate_products_cache, invalidate_plans_cache
+from app.services.cache import cache, invalidate_products_cache
 
 logger = get_logger("neuro_store.products")
 
@@ -43,7 +42,7 @@ async def get_products(
     try:
         logger.info("Fetching products", skip=skip, limit=limit, category=category)
         
-        query = db.query(Product).filter(Product.is_active == True)
+        query = db.query(Product).filter(Product.is_active)
         
         if category:
             query = query.filter(Product.category == category)
@@ -101,7 +100,7 @@ async def get_product_plans(
         # Получаем планы через связующую таблицу
         product_plans = db.query(ProductPlan).filter(
             ProductPlan.product_id == product_id,
-            ProductPlan.is_available == True
+            ProductPlan.is_available
         ).all()
         
         plans = []

@@ -2,7 +2,7 @@
 Модель пользователя
 """
 
-from sqlalchemy import Column, BigInteger, String, Text, Boolean, DateTime, Numeric
+from sqlalchemy import Column, BigInteger, String, Boolean, DateTime, Numeric
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base

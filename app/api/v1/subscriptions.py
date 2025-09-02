@@ -59,7 +59,7 @@ def create_subscription(
     # Проверяем существование продукта и плана
     product = db.query(Product).filter(
         Product.id == subscription_data.product_id,
-        Product.is_active == True
+        Product.is_active
     ).first()
     
     if not product:
@@ -70,7 +70,7 @@ def create_subscription(
     
     plan = db.query(Plan).filter(
         Plan.id == subscription_data.plan_id,
-        Plan.is_active == True
+        Plan.is_active
     ).first()
     
     if not plan:

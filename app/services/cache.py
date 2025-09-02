@@ -4,11 +4,9 @@
 
 import json
 import functools
-from typing import Any, Optional, Callable
-from datetime import timedelta
+from typing import Optional, Callable
 
 import redis.asyncio as redis
-from fastapi import Request
 
 from app.core.config import settings
 from app.core.logging_config import get_logger

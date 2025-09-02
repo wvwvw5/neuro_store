@@ -152,7 +152,7 @@ jobs:
         RATE_LIMIT_SUBSCRIPTIONS: 50/minute
 
     - name: 📊 Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       if: success()
       with:
         file: ./coverage.xml
@@ -161,7 +161,7 @@ jobs:
         fail_ci_if_error: false
 
     - name: 📋 Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-python-${{ matrix.python-version }}
@@ -172,7 +172,7 @@ jobs:
         retention-days: 30
 
     - name: 📝 Upload test logs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: test-logs-python-${{ matrix.python-version }}
@@ -253,7 +253,7 @@ jobs:
         safety check --json --output safety-report.json || echo "Safety check completed with warnings"
 
     - name: 📋 Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports

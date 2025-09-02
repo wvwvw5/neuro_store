@@ -12,7 +12,7 @@ from app.core.logging_config import get_logger, log_auth_event
 from app.models.user import User
 from app.models.role import Role
 from app.models.user_role import UserRole
-from app.schemas.auth import UserLogin, Token, UserCreate, UserResponse
+from app.schemas.auth import Token, UserCreate, UserResponse
 
 logger = get_logger("neuro_store.auth")
 

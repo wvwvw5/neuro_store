@@ -22,7 +22,7 @@ def get_roles(
     current_user: User = Depends(require_admin)
 ) -> Any:
     """Получение списка всех ролей (только для админов)"""
-    roles = db.query(Role).filter(Role.is_active == True).all()
+    roles = db.query(Role).filter(Role.is_active).all()
     return roles
 
 

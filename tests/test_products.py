@@ -4,10 +4,8 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
 from app.models.product import Product
-from app.models.plan import Plan
 from app.models.product_plan import ProductPlan
 from tests.conftest import create_test_product_data
 
