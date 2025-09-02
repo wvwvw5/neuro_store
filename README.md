@@ -1,18 +1,21 @@
 # Магазин подписок на нейросети (Neuro Store)
 
-> Учебный курсовой проект: защищённая клиент-серверная система для продажи подписок на нейросетевые сервисы. Backend: **FastAPI + PostgreSQL + SQLAlchemy/Alembic**, Frontend: **Next.js (React)**, DevOps: **Docker Compose**.
+> Учебный курсовой проект: защищённая клиент-серверная система для продажи подписок на нейросетевые сервисы.
+> Backend: **FastAPI + PostgreSQL + SQLAlchemy/Alembic**, Frontend: **Next.js (React)**, DevOps: **Docker Compose**.
 
 ---
 
 ## Содержание
 
-* [Быстрый старт](#быстрый-старт)
-* [Локальный запуск без Docker](#локальный-запуск-без-docker)
-* [Архитектура базы данных](#архитектура-базы-данных)
-* [Миграции БД (Alembic)](#миграции-бд-alembic)
-* [Скрипты бэкапа/восстановления](#скрипты-бэкапавосстановления)
-* [Дорожная карта](#дорожная-карта)
-* [Стандарты разработки](#стандарты-разработки)
+- [Быстрый старт](#быстрый-старт)
+- [Локальный запуск без Docker](#локальный-запуск-без-docker)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
+- [Архитектура базы данных](#архитектура-базы-данных)
+- [Миграции БД (Alembic)](#миграции-бд-alembic)
+- [Скрипты бэкапа/восстановления](#скрипты-бэкапавосстановления)
+- [Дорожная карта](#дорожная-карта)
+- [Стандарты разработки](#стандарты-разработки)
 
 ---
 
@@ -20,19 +23,22 @@
 
 ### Запуск через Docker Compose (рекомендуется)
 
-1. **Поднимите сервисы:**
+1. Поднимите сервисы:
+
 ```bash
 docker compose -f ops/docker-compose.yml up --build
 ```
 
-2. **Доступные сервисы:**
-* **Backend (FastAPI):** http://localhost:8000
-* **Swagger UI:** http://localhost:8000/docs
-* **PostgreSQL:** localhost:5432
-* **pgAdmin:** http://localhost:5050
-* **Frontend (Next.js):** http://localhost:3000
+2. Доступные сервисы:
 
-3. **Примените миграции:**
+- **Backend (FastAPI):** [http://localhost:8000](http://localhost:8000/)
+- **Swagger UI:** <http://localhost:8000/docs>
+- **PostgreSQL:** localhost:5432
+- **pgAdmin:** [http://localhost:5050](http://localhost:5050/)
+- **Frontend (Next.js):** [http://localhost:3000](http://localhost:3000/)
+
+3. Примените миграции:
+
 ```bash
 docker compose exec backend alembic upgrade head
 ```
@@ -360,21 +366,21 @@ INSERT INTO plans (name, description, price, duration_days) VALUES
 
 ## Дорожная карта
 
-| Этап              | Подзадачи                                                            | Статус |
-| ----------------- | -------------------------------------------------------------------- | ------ |
-| 1. Инициализация | README, структура проекта, Docker, pgAdmin                           | ✅      |
-| 2. БД            | ERD, DDL (ddl.sql), триггеры/процедуры, Alembic                      | ✅      |
-| 3. Backend API   | Аутентификация (JWT), RBAC, CRUD: products, plans, subscriptions ... | ⏳      |
-| 4. Клиент        | UI: личный кабинет, подписки, аналитика                              | ⏳      |
-| 5. Тестирование  | Pytest, интеграционные тесты, линтеры                                | ⏳      |
-| 6. Документация  | OpenAPI, инструкции, отчёт по КП                                     | ⏳      |
+| Этап | Подзадачи | Статус |
+| --- | --- | --- |
+| 1. Инициализация | README, структура проекта, Docker, pgAdmin | ✅ |
+| 2. БД | ERD, DDL (`ddl.sql`), триггеры/процедуры, Alembic | ✅ |
+| 3. Backend API | Аутентификация (JWT), RBAC, CRUD: products, plans, subscriptions ... | ⏳ |
+| 4. Клиент | UI: личный кабинет, подписки, аналитика | ⏳ |
+| 5. Тестирование | Pytest, интеграционные тесты, линтеры | ⏳ |
+| 6. Документация | OpenAPI, инструкции, отчёт по КП | ⏳ |
 
 ## Стандарты разработки
 
-* **Коммиты:** Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:` ...)
-* **Ветки:** `main`, `develop`, фичи --- `feature/<task>`
-* **Код-стайл:** `ruff`, `black`, `isort`, `mypy`
-* **PR:** использование шаблона с чек-листом (линтеры, тесты, обновление docs)
+- **Коммиты:** Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:` ...)
+- **Ветки:** `main`, `develop`, фичи --- `feature/<task>`
+- **Код-стайл:** `ruff`, `black`, `isort`, `mypy`
+- **PR:** использование шаблона с чек-листом (линтеры, тесты, обновление docs)
 
 ## Поддержка и развитие
 
