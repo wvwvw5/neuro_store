@@ -10,17 +10,11 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from app.core.config import settings
 
 # Синхронный движок для миграций
-engine = create_engine(
-    settings.DATABASE_URL,
-    pool_pre_ping=True,
-    echo=False
-)
+engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True, echo=False)
 
 # Асинхронный движок для API
 async_engine = create_async_engine(
-    settings.DATABASE_URL_ASYNC,
-    pool_pre_ping=True,
-    echo=False
+    settings.DATABASE_URL_ASYNC, pool_pre_ping=True, echo=False
 )
 
 # Синхронная сессия

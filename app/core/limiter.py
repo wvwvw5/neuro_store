@@ -18,19 +18,19 @@ async def init_limiter() -> None:
     try:
         # Подключаемся к Redis
         redis_client = redis.from_url(
-            settings.REDIS_URL,
-            encoding="utf-8",
-            decode_responses=True
+            settings.REDIS_URL, encoding="utf-8", decode_responses=True
         )
-        
+
         # Проверяем подключение
         await redis_client.ping()
-        
+
         # Инициализируем FastAPILimiter
         await FastAPILimiter.init(redis_client)
-        
-        logger.info("Rate limiter initialized successfully", redis_url=settings.REDIS_URL)
-        
+
+        logger.info(
+            "Rate limiter initialized successfully", redis_url=settings.REDIS_URL
+        )
+
     except Exception as e:
         logger.error("Failed to initialize rate limiter", error=str(e))
         raise
@@ -51,15 +51,15 @@ def get_client_ip(request: Request) -> str:
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
         return forwarded_for.split(",")[0].strip()
-    
+
     real_ip = request.headers.get("X-Real-IP")
     if real_ip:
         return real_ip
-    
+
     # Возвращаем IP из соединения
     if hasattr(request.client, "host"):
         return request.client.host
-    
+
     return "unknown"
 
 
@@ -67,12 +67,8 @@ def create_rate_limiter(times: int, seconds: int, identifier_func=None):
     """Создание rate limiter с кастомными параметрами"""
     if identifier_func is None:
         identifier_func = get_client_ip
-    
-    return RateLimiter(
-        times=times,
-        seconds=seconds,
-        identifier=identifier_func
-    )
+
+    return RateLimiter(times=times, seconds=seconds, identifier=identifier_func)
 
 
 # Предустановленные лимитеры для разных эндпоинтов
@@ -104,21 +100,21 @@ def get_subscriptions_limiter():
 def parse_rate_limit(rate_limit_str: str) -> tuple[int, int]:
     """Парсинг строки rate limit в формате '20/minute' или '5/hour'"""
     try:
-        times_str, period_str = rate_limit_str.split('/')
+        times_str, period_str = rate_limit_str.split("/")
         times = int(times_str)
-        
-        if period_str == 'second':
+
+        if period_str == "second":
             seconds = 1
-        elif period_str == 'minute':
+        elif period_str == "minute":
             seconds = 60
-        elif period_str == 'hour':
+        elif period_str == "hour":
             seconds = 3600
-        elif period_str == 'day':
+        elif period_str == "day":
             seconds = 86400
         else:
             # По умолчанию считаем минуты
             seconds = 60
-        
+
         return times, seconds
     except (ValueError, AttributeError):
         # Возвращаем значения по умолчанию

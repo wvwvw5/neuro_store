@@ -16,7 +16,7 @@ async def get_products(db: Session = Depends(get_db)):
     # TODO: Реализовать получение продуктов
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение продуктов пока не реализовано"
+        detail="Получение продуктов пока не реализовано",
     )
 
 
@@ -26,7 +26,7 @@ async def get_product(product_id: int, db: Session = Depends(get_db)):
     # TODO: Реализовать получение продукта
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение продукта пока не реализовано"
+        detail="Получение продукта пока не реализовано",
     )
 
 
@@ -36,5 +36,5 @@ async def get_product_plans(product_id: int, db: Session = Depends(get_db)):
     # TODO: Реализовать получение планов
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение планов пока не реализовано"
+        detail="Получение планов пока не реализовано",
     )

@@ -20,7 +20,7 @@ from app.core.exceptions import (
     operational_exception_handler,
     generic_exception_handler,
     neuro_store_exception_handler,
-    NeuroStoreException
+    NeuroStoreException,
 )
 from app.core.limiter import init_limiter, close_limiter
 from app.services.cache import init_cache, close_cache
@@ -35,28 +35,30 @@ logger = get_logger("neuro_store.main")
 async def lifespan(app: FastAPI):
     """Управление жизненным циклом приложения"""
     # Startup
-    logger.info("🚀 Запуск Neuro Store API", 
-                version=settings.PROJECT_VERSION,
-                environment=settings.APP_ENV)
-    
+    logger.info(
+        "🚀 Запуск Neuro Store API",
+        version=settings.PROJECT_VERSION,
+        environment=settings.APP_ENV,
+    )
+
     try:
         # Инициализация Redis для кэширования
         await init_cache()
-        
+
         # Инициализация rate limiter
         await init_limiter()
-        
+
         logger.info("✅ Все сервисы инициализированы успешно")
-        
+
     except Exception as e:
         logger.error("❌ Ошибка инициализации сервисов", error=str(e))
         raise
-    
+
     yield
-    
+
     # Shutdown
     logger.info("🛑 Остановка Neuro Store API")
-    
+
     try:
         await close_cache()
         await close_limiter()
@@ -67,7 +69,7 @@ async def lifespan(app: FastAPI):
 
 def create_application() -> FastAPI:
     """Создание экземпляра FastAPI приложения"""
-    
+
     app = FastAPI(
         title=settings.PROJECT_NAME,
         description=settings.PROJECT_DESCRIPTION,
@@ -79,53 +81,50 @@ def create_application() -> FastAPI:
         contact={
             "name": "Neuro Store Support",
             "email": "support@neurostore.com",
-            "url": "https://github.com/wvwvw5/neuro_store"
+            "url": "https://github.com/wvwvw5/neuro_store",
         },
         license_info={
             "name": "MIT License",
-            "url": "https://opensource.org/licenses/MIT"
+            "url": "https://opensource.org/licenses/MIT",
         },
         openapi_tags=[
             {
                 "name": "Аутентификация",
-                "description": "Регистрация, вход в систему, управление токенами"
+                "description": "Регистрация, вход в систему, управление токенами",
             },
             {
                 "name": "Продукты",
-                "description": "Управление нейросетевыми продуктами и тарифными планами"
+                "description": "Управление нейросетевыми продуктами и тарифными планами",
             },
             {
                 "name": "Подписки",
-                "description": "Создание и управление подписками пользователей"
+                "description": "Создание и управление подписками пользователей",
             },
             {
                 "name": "Администрирование",
-                "description": "Административные функции (только для админов)"
+                "description": "Административные функции (только для админов)",
             },
-            {
-                "name": "Роли",
-                "description": "Управление ролями и правами доступа"
-            }
-        ]
+            {"name": "Роли", "description": "Управление ролями и правами доступа"},
+        ],
     )
 
     # Middleware для логирования запросов
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
         start_time = time.time()
-        
+
         # Выполняем запрос
         response = await call_next(request)
-        
+
         # Логируем запрос
         process_time = time.time() - start_time
         log_request(
             method=request.method,
             url=str(request.url),
             status_code=response.status_code,
-            response_time=process_time
+            response_time=process_time,
         )
-        
+
         return response
 
     # Настройка CORS
@@ -162,10 +161,12 @@ def create_application() -> FastAPI:
 app = create_application()
 
 
-@app.get("/", 
-         summary="Корневой эндпоинт",
-         description="Информация о API и доступных эндпоинтах",
-         tags=["Общие"])
+@app.get(
+    "/",
+    summary="Корневой эндпоинт",
+    description="Информация о API и доступных эндпоинтах",
+    tags=["Общие"],
+)
 async def root():
     """Корневой эндпоинт с информацией о API"""
     return {
@@ -174,26 +175,29 @@ async def root():
         "environment": settings.APP_ENV,
         "docs": "/docs",
         "redoc": "/redoc",
-        "status": "healthy"
+        "status": "healthy",
     }
 
 
-@app.get("/health",
-         summary="Проверка здоровья",
-         description="Проверка состояния API и подключенных сервисов",
-         tags=["Мониторинг"])
+@app.get(
+    "/health",
+    summary="Проверка здоровья",
+    description="Проверка состояния API и подключенных сервисов",
+    tags=["Мониторинг"],
+)
 async def health_check():
     """Проверка здоровья приложения"""
     health_status = {
         "status": "healthy",
         "timestamp": time.time(),
         "version": settings.PROJECT_VERSION,
-        "environment": settings.APP_ENV
+        "environment": settings.APP_ENV,
     }
-    
+
     # Проверяем Redis
     try:
         from app.services.cache import redis_client
+
         if redis_client:
             await redis_client.ping()
             health_status["redis"] = "connected"
@@ -201,14 +205,16 @@ async def health_check():
             health_status["redis"] = "not_initialized"
     except Exception:
         health_status["redis"] = "disconnected"
-    
+
     return health_status
 
 
-@app.get("/api/v1/health",
-         summary="Проверка здоровья API v1",
-         description="Проверка состояния API версии 1",
-         tags=["Мониторинг"])
+@app.get(
+    "/api/v1/health",
+    summary="Проверка здоровья API v1",
+    description="Проверка состояния API версии 1",
+    tags=["Мониторинг"],
+)
 async def api_health_check():
     """Проверка здоровья API v1"""
     return {
@@ -217,21 +223,22 @@ async def api_health_check():
         "timestamp": time.time(),
         "endpoints": {
             "auth": "✅ Доступна",
-            "products": "✅ Доступна", 
+            "products": "✅ Доступна",
             "subscriptions": "✅ Доступна",
             "admin": "✅ Доступна",
             "roles": "✅ Доступна",
-            "payments": "✅ Доступна"
-        }
+            "payments": "✅ Доступна",
+        },
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=settings.APP_ENV == "development",
-        log_level=settings.LOG_LEVEL.lower()
+        log_level=settings.LOG_LEVEL.lower(),
     )

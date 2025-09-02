@@ -17,7 +17,7 @@ async def get_current_user():
     # TODO: Реализовать получение текущего пользователя
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение пользователя пока не реализовано"
+        detail="Получение пользователя пока не реализовано",
     )
 
 
@@ -27,7 +27,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
     # TODO: Реализовать получение пользователя
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение пользователя пока не реализовано"
+        detail="Получение пользователя пока не реализовано",
     )
 
 
@@ -37,5 +37,5 @@ async def update_user(user_id: int, db: Session = Depends(get_db)):
     # TODO: Реализовать обновление пользователя
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Обновление пользователя пока не реализовано"
+        detail="Обновление пользователя пока не реализовано",
     )

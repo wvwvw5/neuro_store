@@ -6,14 +6,22 @@ from app.core.database import Base
 
 class Role(Base):
     """Модель ролей пользователей"""
+
     __tablename__ = "roles"
 
     id = Column(BigInteger, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False, comment="Название роли")
     description = Column(Text, comment="Описание роли")
     is_active = Column(Boolean, default=True, comment="Активна ли роль")
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="Дата создания")
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), comment="Дата обновления")
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), comment="Дата создания"
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        comment="Дата обновления",
+    )
 
     # Связи
     user_roles = relationship("UserRole", back_populates="role")

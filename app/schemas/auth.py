@@ -9,12 +9,14 @@ from pydantic import BaseModel, EmailStr
 
 class UserLogin(BaseModel):
     """Схема входа пользователя"""
+
     email: EmailStr
     password: str
 
 
 class UserCreate(BaseModel):
     """Схема создания пользователя"""
+
     email: EmailStr
     password: str
     first_name: str
@@ -24,6 +26,7 @@ class UserCreate(BaseModel):
 
 class UserResponse(BaseModel):
     """Схема ответа с данными пользователя"""
+
     id: int
     email: str
     first_name: str
@@ -38,10 +41,12 @@ class UserResponse(BaseModel):
 
 class Token(BaseModel):
     """Схема токена доступа"""
+
     access_token: str
     token_type: str
 
 
 class TokenData(BaseModel):
     """Схема данных токена"""
+
     email: Optional[str] = None

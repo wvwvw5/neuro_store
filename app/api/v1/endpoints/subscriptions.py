@@ -16,7 +16,7 @@ async def get_subscriptions(db: Session = Depends(get_db)):
     # TODO: Реализовать получение подписок
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение подписок пока не реализовано"
+        detail="Получение подписок пока не реализовано",
     )
 
 
@@ -26,7 +26,7 @@ async def get_subscription(subscription_id: int, db: Session = Depends(get_db)):
     # TODO: Реализовать получение подписки
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение подписки пока не реализовано"
+        detail="Получение подписки пока не реализовано",
     )
 
 
@@ -36,7 +36,7 @@ async def create_subscription(db: Session = Depends(get_db)):
     # TODO: Реализовать создание подписки
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Создание подписки пока не реализовано"
+        detail="Создание подписки пока не реализовано",
     )
 
 
@@ -46,5 +46,5 @@ async def cancel_subscription(subscription_id: int, db: Session = Depends(get_db
     # TODO: Реализовать отмену подписки
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Отмена подписки пока не реализована"
+        detail="Отмена подписки пока не реализована",
     )

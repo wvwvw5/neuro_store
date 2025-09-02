@@ -20,19 +20,19 @@ redis_client: Optional[redis.Redis] = None
 async def init_cache() -> None:
     """Инициализация подключения к Redis для кэширования"""
     global redis_client
-    
+
     try:
         redis_client = redis.from_url(
-            settings.REDIS_URL,
-            encoding="utf-8",
-            decode_responses=True
+            settings.REDIS_URL, encoding="utf-8", decode_responses=True
         )
-        
+
         # Проверяем подключение
         await redis_client.ping()
-        
-        logger.info("Cache service initialized successfully", redis_url=settings.REDIS_URL)
-        
+
+        logger.info(
+            "Cache service initialized successfully", redis_url=settings.REDIS_URL
+        )
+
     except Exception as e:
         logger.error("Failed to initialize cache service", error=str(e))
         redis_client = None
@@ -42,7 +42,7 @@ async def init_cache() -> None:
 async def close_cache() -> None:
     """Закрытие подключения к Redis"""
     global redis_client
-    
+
     if redis_client:
         try:
             await redis_client.close()
@@ -57,7 +57,7 @@ async def get_cache(key: str) -> Optional[str]:
     """Получение значения из кэша"""
     if not redis_client:
         return None
-    
+
     try:
         value = await redis_client.get(key)
         if value:
@@ -75,13 +75,13 @@ async def set_cache(key: str, value: str, ttl: int = None) -> bool:
     """Сохранение значения в кэш"""
     if not redis_client:
         return False
-    
+
     try:
         if ttl:
             await redis_client.setex(key, ttl, value)
         else:
             await redis_client.set(key, value)
-        
+
         logger.debug("Cache set", key=key, ttl=ttl)
         return True
     except Exception as e:
@@ -93,7 +93,7 @@ async def delete_cache(key: str) -> bool:
     """Удаление значения из кэша"""
     if not redis_client:
         return False
-    
+
     try:
         result = await redis_client.delete(key)
         logger.debug("Cache delete", key=key, deleted=bool(result))
@@ -107,7 +107,7 @@ async def delete_cache_pattern(pattern: str) -> int:
     """Удаление всех ключей по паттерну"""
     if not redis_client:
         return 0
-    
+
     try:
         keys = await redis_client.keys(pattern)
         if keys:
@@ -123,28 +123,29 @@ async def delete_cache_pattern(pattern: str) -> int:
 def generate_cache_key(prefix: str, *args, **kwargs) -> str:
     """Генерация ключа кэша"""
     key_parts = [prefix]
-    
+
     # Добавляем аргументы
     for arg in args:
         key_parts.append(str(arg))
-    
+
     # Добавляем именованные аргументы
     for k, v in sorted(kwargs.items()):
         if v is not None:
             key_parts.append(f"{k}={v}")
-    
+
     return ":".join(key_parts)
 
 
 def cache(ttl: int = None, key_prefix: str = None):
     """Декоратор для кэширования результатов функций"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             # Генерируем ключ кэша
             prefix = key_prefix or f"{func.__module__}.{func.__name__}"
             cache_key = generate_cache_key(prefix, *args, **kwargs)
-            
+
             # Пытаемся получить из кэша
             cached_value = await get_cache(cache_key)
             if cached_value:
@@ -152,39 +153,41 @@ def cache(ttl: int = None, key_prefix: str = None):
                     return json.loads(cached_value)
                 except json.JSONDecodeError:
                     logger.warning("Invalid JSON in cache", key=cache_key)
-            
+
             # Выполняем функцию
             result = await func(*args, **kwargs)
-            
+
             # Сохраняем в кэш
             if result is not None:
                 try:
                     cache_ttl = ttl or settings.CACHE_TTL_SECONDS
-                    await set_cache(cache_key, json.dumps(result, default=str), cache_ttl)
+                    await set_cache(
+                        cache_key, json.dumps(result, default=str), cache_ttl
+                    )
                 except (TypeError, ValueError) as e:
-                    logger.warning("Failed to cache result", key=cache_key, error=str(e))
-            
+                    logger.warning(
+                        "Failed to cache result", key=cache_key, error=str(e)
+                    )
+
             return result
-        
+
         return wrapper
+
     return decorator
 
 
 # Специализированные функции для инвалидации кэша
 
+
 async def invalidate_products_cache() -> None:
     """Инвалидация кэша продуктов"""
-    patterns = [
-        "products:*",
-        "product_plans:*",
-        "*products*"
-    ]
-    
+    patterns = ["products:*", "product_plans:*", "*products*"]
+
     total_deleted = 0
     for pattern in patterns:
         deleted = await delete_cache_pattern(pattern)
         total_deleted += deleted
-    
+
     logger.info("Products cache invalidated", total_deleted=total_deleted)
 
 
@@ -194,21 +197,18 @@ async def invalidate_plans_cache(product_id: int = None) -> None:
         pattern = f"*plans*{product_id}*"
     else:
         pattern = "*plans*"
-    
+
     deleted = await delete_cache_pattern(pattern)
     logger.info("Plans cache invalidated", pattern=pattern, deleted_count=deleted)
 
 
 async def invalidate_user_cache(user_id: int) -> None:
     """Инвалидация кэша пользователя"""
-    patterns = [
-        f"*user*{user_id}*",
-        f"*subscriptions*{user_id}*"
-    ]
-    
+    patterns = [f"*user*{user_id}*", f"*subscriptions*{user_id}*"]
+
     total_deleted = 0
     for pattern in patterns:
         deleted = await delete_cache_pattern(pattern)
         total_deleted += deleted
-    
+
     logger.info("User cache invalidated", user_id=user_id, total_deleted=total_deleted)

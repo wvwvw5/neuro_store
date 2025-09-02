@@ -15,27 +15,23 @@ router = APIRouter()
 
 @router.post("/login", response_model=Token)
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
     """Вход пользователя в систему"""
     # TODO: Реализовать логику аутентификации
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Аутентификация пока не реализована"
+        detail="Аутентификация пока не реализована",
     )
 
 
 @router.post("/register", response_model=Token)
-async def register(
-    user_data: UserLogin,
-    db: Session = Depends(get_db)
-):
+async def register(user_data: UserLogin, db: Session = Depends(get_db)):
     """Регистрация нового пользователя"""
     # TODO: Реализовать логику регистрации
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Регистрация пока не реализована"
+        detail="Регистрация пока не реализована",
     )
 
 
@@ -45,5 +41,5 @@ async def refresh_token():
     # TODO: Реализовать обновление токена
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Обновление токена пока не реализовано"
+        detail="Обновление токена пока не реализовано",
     )

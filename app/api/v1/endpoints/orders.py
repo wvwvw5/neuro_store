@@ -16,7 +16,7 @@ async def get_orders(db: Session = Depends(get_db)):
     # TODO: Реализовать получение заказов
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение заказов пока не реализовано"
+        detail="Получение заказов пока не реализовано",
     )
 
 
@@ -26,7 +26,7 @@ async def get_order(order_id: int, db: Session = Depends(get_db)):
     # TODO: Реализовать получение заказа
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Получение заказа пока не реализовано"
+        detail="Получение заказа пока не реализовано",
     )
 
 
@@ -36,7 +36,7 @@ async def create_order(db: Session = Depends(get_db)):
     # TODO: Реализовать создание заказа
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Создание заказа пока не реализовано"
+        detail="Создание заказа пока не реализовано",
     )
 
 
@@ -46,7 +46,7 @@ async def confirm_order(order_id: int, db: Session = Depends(get_db)):
     # TODO: Реализовать подтверждение заказа
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Подтверждение заказа пока не реализовано"
+        detail="Подтверждение заказа пока не реализовано",
     )
 
 
@@ -56,5 +56,5 @@ async def cancel_order(order_id: int, db: Session = Depends(get_db)):
     # TODO: Реализовать отмену заказа
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Отмена заказа пока не реализована"
+        detail="Отмена заказа пока не реализована",
     )
