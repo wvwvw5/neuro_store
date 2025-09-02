@@ -4,57 +4,35 @@ Neuro Store - FastAPI приложение для магазина подпис�
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-
 from app.core.config import settings
-from app.api.v1.api import api_router
+from app.api.v1 import auth, products, subscriptions
 
+app = FastAPI(
+    title="Neuro Store API",
+    description="API для магазина подписок на нейросетевые сервисы",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Управление жизненным циклом приложения"""
-    # Startup
-    print("🚀 Запуск Neuro Store API...")
-    
-    yield
-    
-    # Shutdown
-    print("🛑 Остановка Neuro Store API...")
+# Настройка CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-
-def create_application() -> FastAPI:
-    """Создание экземпляра FastAPI приложения"""
-    
-    app = FastAPI(
-        title=settings.PROJECT_NAME,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
-        lifespan=lifespan,
-        docs_url="/docs",
-        redoc_url="/redoc"
-    )
-
-    # Настройка CORS
-    if settings.BACKEND_CORS_ORIGINS:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
-
-    # Подключение роутеров
-    app.include_router(api_router, prefix=settings.API_V1_STR)
-
-    return app
-
-
-app = create_application()
+# Подключение API роутеров
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(products.router, prefix="/api/v1")
+app.include_router(subscriptions.router, prefix="/api/v1")
 
 
 @app.get("/")
 async def root():
-    """Корневой endpoint"""
+    """Корневой эндпоинт"""
     return {
         "message": "Добро пожаловать в Neuro Store API!",
         "version": "1.0.0",
@@ -65,8 +43,18 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Проверка состояния API"""
-    return {"status": "healthy", "service": "neuro-store-api"}
+    """Проверка здоровья приложения"""
+    return {"status": "healthy", "timestamp": "2024-01-01T00:00:00Z"}
+
+
+@app.get("/api/v1/health")
+async def api_health_check():
+    """Проверка здоровья API"""
+    return {
+        "status": "healthy",
+        "api_version": "v1",
+        "timestamp": "2024-01-01T00:00:00Z"
+    }
 
 
 if __name__ == "__main__":
