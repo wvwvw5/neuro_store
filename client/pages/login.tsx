@@ -184,6 +184,20 @@ export default function Login() {
               </div>
             </form>
 
+            {/* Кнопка автозаполнения тестовыми данными */}
+            <div className="mb-6 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@neurostore.com');
+                  setPassword('admin123');
+                }}
+                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+              >
+                🧪 Заполнить тестовыми данными (Админ)
+              </button>
+            </div>
+
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -218,13 +232,13 @@ export default function Login() {
                     <p className="font-medium text-red-800 mb-1">🛡️ Администратор:</p>
                     <p className="text-red-700">
                       <strong>Email:</strong> admin@neurostore.com<br />
-                      <strong>Пароль:</strong> test123
+                      <strong>Пароль:</strong> admin123
                     </p>
                     <button
                       type="button"
                       onClick={() => {
                         setEmail('admin@neurostore.com');
-                        setPassword('test123');
+                        setPassword('admin123');
                       }}
                       className="mt-2 text-red-600 hover:text-red-500 text-xs font-medium"
                     >
