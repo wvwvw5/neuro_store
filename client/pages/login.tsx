@@ -36,8 +36,32 @@ export default function Login() {
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('token_type', data.token_type);
       
-      // Перенаправляем на главную страницу
-      router.push('/dashboard');
+      // Проверяем роли пользователя для правильного перенаправления
+      try {
+        const rolesResponse = await fetch('http://localhost:8000/api/v1/auth/me/roles', {
+          headers: {
+            'Authorization': `${data.token_type} ${data.access_token}`,
+          },
+        });
+
+        if (rolesResponse.ok) {
+          const rolesData = await rolesResponse.json();
+          
+          // Если пользователь админ - перенаправляем на админ-панель
+          if (rolesData.is_admin) {
+            router.push('/admin');
+          } else {
+            // Обычных пользователей - в личный кабинет
+            router.push('/dashboard');
+          }
+        } else {
+          // Если не удалось получить роли - в личный кабинет
+          router.push('/dashboard');
+        }
+      } catch (err) {
+        // При ошибке - в личный кабинет
+        router.push('/dashboard');
+      }
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
@@ -171,20 +195,43 @@ export default function Login() {
               </div>
 
               <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
-                  <strong>Email:</strong> test@neurostore.com<br />
-                  <strong>Пароль:</strong> test123
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('test@neurostore.com');
-                    setPassword('test123');
-                  }}
-                  className="mt-2 text-blue-600 hover:text-blue-500 text-sm font-medium"
-                >
-                  Заполнить тестовыми данными
-                </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="bg-blue-50 p-3 rounded">
+                    <p className="font-medium text-blue-800 mb-1">👤 Обычный пользователь:</p>
+                    <p className="text-blue-700">
+                      <strong>Email:</strong> test@neurostore.com<br />
+                      <strong>Пароль:</strong> test123
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('test@neurostore.com');
+                        setPassword('test123');
+                      }}
+                      className="mt-2 text-blue-600 hover:text-blue-500 text-xs font-medium"
+                    >
+                      Заполнить данными
+                    </button>
+                  </div>
+                  
+                  <div className="bg-red-50 p-3 rounded">
+                    <p className="font-medium text-red-800 mb-1">🛡️ Администратор:</p>
+                    <p className="text-red-700">
+                      <strong>Email:</strong> admin@neurostore.com<br />
+                      <strong>Пароль:</strong> test123
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('admin@neurostore.com');
+                        setPassword('test123');
+                      }}
+                      className="mt-2 text-red-600 hover:text-red-500 text-xs font-medium"
+                    >
+                      Заполнить данными
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

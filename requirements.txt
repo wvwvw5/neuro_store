@@ -18,6 +18,15 @@ pydantic[email]==2.5.0
 pydantic-settings==2.1.0
 email-validator==2.1.0
 
+# Redis и кэширование
+redis==5.0.1
+fastapi-limiter==0.1.5
+aioredis==2.0.1
+
+# Логирование
+structlog==23.2.0
+colorama==0.4.6
+
 # Утилиты
 python-dotenv==1.0.0
 httpx==0.25.2
@@ -25,10 +34,18 @@ httpx==0.25.2
 # Разработка и тестирование
 pytest==7.4.3
 pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
 httpx==0.25.2
+fakeredis==2.20.1
 
 # Линтеры и форматирование
 ruff==0.1.6
 black==23.11.0
 isort==5.12.0
 mypy==1.7.1
+
+# Дополнительные зависимости для production
+gunicorn==21.2.0
+uvloop==0.19.0
+ujson==5.8.0

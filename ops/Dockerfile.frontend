@@ -1,16 +1,48 @@
-FROM node:18-alpine
+# Multi-stage Dockerfile для Next.js frontend
+
+# Стадия 1: Установка зависимостей
+FROM node:20-alpine AS deps
 
 # Установка системных зависимостей
 RUN apk add --no-cache libc6-compat
 
-# Рабочая директория
 WORKDIR /app
 
 # Копирование файлов зависимостей
 COPY package*.json ./
-
-# Установка зависимостей
 RUN npm ci --only=production
+
+# Стадия 2: Сборка приложения
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Копирование зависимостей из предыдущей стадии
+COPY --from=deps /app/node_modules ./node_modules
+
+# Копирование исходного кода
+COPY . .
+
+# Переменные окружения для сборки
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV production
+
+# Сборка приложения
+RUN npm run build
+
+# Стадия 3: Development образ
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+# Установка системных зависимостей
+RUN apk add --no-cache libc6-compat curl
+
+# Копирование package.json
+COPY package*.json ./
+
+# Установка всех зависимостей (включая dev)
+RUN npm ci
 
 # Копирование исходного кода
 COPY . .
@@ -19,10 +51,49 @@ COPY . .
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 RUN chown -R nextjs:nodejs /app
+
 USER nextjs
 
 # Открытие порта
 EXPOSE 3000
 
-# Команда по умолчанию
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Команда для development
 CMD ["npm", "run", "dev"]
+
+# Стадия 4: Production образ
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Установка системных зависимостей
+RUN apk add --no-cache libc6-compat curl
+
+# Создание пользователя для безопасности
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+# Копирование собранного приложения
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+USER nextjs
+
+# Открытие порта
+EXPOSE 3000
+
+# Переменные окружения
+ENV PORT 3000
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Команда для production
+CMD ["node", "server.js"]

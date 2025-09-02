@@ -1,19 +1,26 @@
-FROM python:3.11-slim
+# Multi-stage Dockerfile для FastAPI backend
+
+# Стадия 1: Базовый образ с зависимостями
+FROM python:3.11-slim as base
 
 # Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     gcc \
+    g++ \
+    build-essential \
+    libpq-dev \
     postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Рабочая директория
-WORKDIR /app
-
-# Копирование файлов зависимостей
-COPY requirements.txt .
-
 # Установка Python зависимостей
-RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Стадия 2: Development образ
+FROM base as development
 
 # Копирование исходного кода
 COPY . .
@@ -21,10 +28,35 @@ COPY . .
 # Создание пользователя для безопасности
 RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
+
 USER app
 
 # Открытие порта
 EXPOSE 8000
 
-# Команда по умолчанию
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Команда для development
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Стадия 3: Production образ
+FROM base as production
+
+# Копирование только необходимых файлов
+COPY app/ ./app/
+COPY alembic/ ./alembic/
+COPY alembic.ini .
+
+# Создание пользователя для безопасности
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+
+USER app
+
+# Открытие порта
+EXPOSE 8000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+# Команда для production
+CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]

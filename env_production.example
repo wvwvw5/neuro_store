@@ -1,0 +1,102 @@
+# ========================================
+# Переменные окружения для Neuro Store
+# ОБЯЗАТЕЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ PRODUCTION
+# ========================================
+
+# Backend настройки
+APP_ENV=development
+LOG_LEVEL=INFO
+DEBUG=true
+
+# JWT и безопасность
+JWT_SECRET=your-super-secret-jwt-key-change-in-production-min-32-chars
+JWT_EXPIRE_MINUTES=60
+SECRET_KEY=your-app-secret-key-change-in-production-min-32-chars
+ALGORITHM=HS256
+
+# База данных PostgreSQL
+DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/neuro_store
+DATABASE_URL_ASYNC=postgresql+asyncpg://postgres:postgres@db:5432/neuro_store
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=neuro_store
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+
+# Redis для кэширования и rate limiting
+REDIS_URL=redis://redis:6379/0
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
+
+# Rate Limiting настройки
+RATE_LIMIT_DEFAULT=20/minute
+RATE_LIMIT_LOGIN=5/minute
+RATE_LIMIT_REGISTER=3/minute
+RATE_LIMIT_PRODUCTS=30/minute
+RATE_LIMIT_SUBSCRIPTIONS=10/minute
+
+# Кэширование
+CACHE_TTL_SECONDS=120
+CACHE_TTL_PRODUCTS=300
+CACHE_TTL_PLANS=600
+
+# API настройки
+API_V1_STR=/api/v1
+PROJECT_NAME=Neuro Store API
+PROJECT_VERSION=1.0.0
+PROJECT_DESCRIPTION=API для магазина подписок на нейросетевые сервисы
+
+# CORS настройки
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+BACKEND_CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+
+# pgAdmin
+PGADMIN_DEFAULT_EMAIL=admin@neurostore.com
+PGADMIN_DEFAULT_PASSWORD=admin123
+PGADMIN_CONFIG_SERVER_MODE=False
+
+# Frontend настройки
+NEXT_PUBLIC_API_BASE=http://localhost:8000
+NEXT_PUBLIC_ENVIRONMENT=development
+
+# Логирование
+LOG_FORMAT=json
+LOG_FILENAME=app.log
+LOG_ROTATION=10MB
+LOG_RETENTION=30
+
+# Мониторинг и метрики (опционально)
+SENTRY_DSN=your-sentry-dsn-here
+PROMETHEUS_ENABLED=false
+PROMETHEUS_PORT=9090
+
+# Внешние API (для интеграции с нейросетями)
+OPENAI_API_KEY=your-openai-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+STABILITY_API_KEY=your-stability-api-key
+MIDJOURNEY_API_KEY=your-midjourney-api-key
+
+# Платежные системы
+STRIPE_SECRET_KEY=your-stripe-secret-key
+STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
+YOOKASSA_SHOP_ID=your-yookassa-shop-id
+YOOKASSA_SECRET_KEY=your-yookassa-secret-key
+
+# Email уведомления
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM_EMAIL=noreply@neurostore.com
+SMTP_FROM_NAME=Neuro Store
+
+# Файловое хранилище (опционально)
+S3_BUCKET=neuro-store-files
+S3_ACCESS_KEY=your-s3-access-key
+S3_SECRET_KEY=your-s3-secret-key
+S3_REGION=us-east-1
+
+# Тестирование
+TEST_DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/neuro_store_test
+TEST_REDIS_URL=redis://redis:6379/1

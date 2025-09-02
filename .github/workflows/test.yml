@@ -1,0 +1,311 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: neuro_store_test
+          POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d neuro_store_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --health-start-period 10s
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: 💾 Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: 📦 Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client redis-tools
+
+    - name: 🔧 Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: ⏳ Wait for PostgreSQL to be ready
+      run: |
+        echo "Waiting for PostgreSQL to be ready..."
+        for i in {1..30}; do
+          if pg_isready -h localhost -p 5432 -U postgres; then
+            echo "✅ PostgreSQL is ready!"
+            break
+          fi
+          echo "⏳ Attempt $i/30: PostgreSQL not ready yet, waiting..."
+          sleep 2
+        done
+        
+        # Финальная проверка
+        if ! pg_isready -h localhost -p 5432 -U postgres; then
+          echo "❌ PostgreSQL failed to start"
+          exit 1
+        fi
+
+    - name: ⏳ Wait for Redis to be ready
+      run: |
+        echo "Waiting for Redis to be ready..."
+        for i in {1..15}; do
+          if redis-cli -h localhost -p 6379 ping; then
+            echo "✅ Redis is ready!"
+            break
+          fi
+          echo "⏳ Attempt $i/15: Redis not ready yet, waiting..."
+          sleep 2
+        done
+        
+        # Финальная проверка
+        if ! redis-cli -h localhost -p 6379 ping; then
+          echo "❌ Redis failed to start"
+          exit 1
+        fi
+
+    - name: 🗄️ Create test database
+      run: |
+        echo "Creating test database..."
+        PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE neuro_store_test;" || echo "Database may already exist"
+        PGPASSWORD=postgres psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE neuro_store_test TO postgres;"
+
+    - name: 🔄 Run database migrations
+      run: |
+        echo "Running Alembic migrations..."
+        alembic upgrade head
+      env:
+        DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/neuro_store_test
+        REDIS_URL: redis://localhost:6379/0
+        JWT_SECRET: test_jwt_secret_for_ci_only_min_32_chars
+        SECRET_KEY: test_secret_key_for_ci_only_min_32_chars
+        APP_ENV: test
+        LOG_LEVEL: WARNING
+
+    - name: 🧪 Run tests
+      run: |
+        echo "Running pytest with coverage..."
+        pytest -q --disable-warnings --maxfail=1 --cov=app --cov-report=xml --cov-report=html --junitxml=junit.xml -v
+      env:
+        APP_ENV: test
+        LOG_LEVEL: WARNING
+        DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/neuro_store_test
+        TEST_DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/neuro_store_test
+        REDIS_URL: redis://localhost:6379/0
+        JWT_SECRET: test_jwt_secret_for_ci_only_min_32_chars
+        SECRET_KEY: test_secret_key_for_ci_only_min_32_chars
+        ACCESS_TOKEN_EXPIRE_MINUTES: 60
+        JWT_EXPIRE_MINUTES: 60
+        ALGORITHM: HS256
+        CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+        PROJECT_NAME: Neuro Store API Test
+        PROJECT_VERSION: 1.0.0-test
+        PROJECT_DESCRIPTION: Test API для магазина подписок на нейросетевые сервисы
+        CACHE_TTL_SECONDS: 60
+        CACHE_TTL_PRODUCTS: 120
+        CACHE_TTL_PLANS: 180
+        RATE_LIMIT_DEFAULT: 100/minute
+        RATE_LIMIT_LOGIN: 20/minute
+        RATE_LIMIT_REGISTER: 10/minute
+        RATE_LIMIT_PRODUCTS: 100/minute
+        RATE_LIMIT_SUBSCRIPTIONS: 50/minute
+
+    - name: 📊 Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      if: success()
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: neuro-store-coverage
+        fail_ci_if_error: false
+
+    - name: 📋 Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-python-${{ matrix.python-version }}
+        path: |
+          junit.xml
+          htmlcov/
+          coverage.xml
+        retention-days: 30
+
+    - name: 📝 Upload test logs
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: test-logs-python-${{ matrix.python-version }}
+        path: |
+          *.log
+          pytest.log
+        retention-days: 7
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: 💾 Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-lint-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-lint-
+
+    - name: 🔧 Install linting dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff black isort mypy types-redis
+
+    - name: 🔍 Run ruff linter
+      run: |
+        echo "Running ruff..."
+        ruff check app/ tests/ || exit 1
+
+    - name: 🎨 Check black formatting
+      run: |
+        echo "Checking black formatting..."
+        black --check app/ tests/ || exit 1
+
+    - name: 📦 Check isort imports
+      run: |
+        echo "Checking isort imports..."
+        isort --check-only app/ tests/ || exit 1
+
+    - name: 🔬 Run mypy type checking
+      run: |
+        echo "Running mypy..."
+        mypy app/ || exit 0  # Не блокируем CI при предупреждениях mypy
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🛡️ Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: 📤 Upload Trivy scan results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: 🔐 Run safety check for Python dependencies
+      run: |
+        pip install safety
+        safety check --json --output safety-report.json || echo "Safety check completed with warnings"
+
+    - name: 📋 Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          trivy-results.sarif
+          safety-report.json
+        retention-days: 30
+
+  build-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔨 Test backend Docker build
+      run: |
+        echo "Testing backend Docker build..."
+        docker build -f ops/Dockerfile.backend --target development -t neuro-store-backend-test .
+
+    - name: 🔨 Test frontend Docker build
+      run: |
+        echo "Testing frontend Docker build..."
+        docker build -f ops/Dockerfile.frontend --target development -t neuro-store-frontend-test ./client
+
+    - name: 🧪 Test Docker Compose
+      run: |
+        echo "Testing Docker Compose configuration..."
+        # Проверяем только синтаксис, не запускаем
+        docker compose -f ops/docker-compose.yml config
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, lint, security, build-test]
+    if: always()
+    
+    steps:
+    - name: 📊 Check test results
+      run: |
+        echo "=== CI PIPELINE RESULTS ==="
+        echo "Tests: ${{ needs.test.result }}"
+        echo "Linting: ${{ needs.lint.result }}"
+        echo "Security: ${{ needs.security.result }}"
+        echo "Build: ${{ needs.build-test.result }}"
+        echo "=========================="
+        
+        if [[ "${{ needs.test.result }}" == "success" && "${{ needs.lint.result }}" == "success" ]]; then
+          echo "✅ All critical checks passed!"
+        else
+          echo "❌ Some critical checks failed!"
+          exit 1
+        fi
