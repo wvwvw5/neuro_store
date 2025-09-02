@@ -117,7 +117,7 @@ def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token)
-) -> Any:
+):
     """Удаление продукта (только для админов)"""
     # TODO: Проверка прав доступа (админ)
     
@@ -131,5 +131,3 @@ def delete_product(
     # Мягкое удаление - просто деактивируем
     product.is_active = False
     db.commit()
-    
-    return None

@@ -8,7 +8,8 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+# Проверяем наличие Docker Compose (поддержка v1 и v2)
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
     echo "❌ Docker Compose не установлен. Установите Docker Compose и попробуйте снова."
     exit 1
 fi
@@ -22,14 +23,22 @@ mkdir -p ops/nginx
 # Проверяем наличие .env файла
 if [ ! -f ".env" ]; then
     echo "📝 Создание .env файла..."
-    cp ops/.env.example .env
+    cp env.example .env
     echo "✅ .env файл создан. Отредактируйте его при необходимости."
 fi
 
 # Запускаем Docker Compose
 echo "🐳 Запуск Docker Compose..."
 cd ops
-docker-compose up --build -d
+
+# Определяем команду Docker Compose (v1 или v2)
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    DOCKER_COMPOSE_CMD="docker compose"
+fi
+
+$DOCKER_COMPOSE_CMD up --build -d
 
 # Ждем запуска сервисов
 echo "⏳ Ожидание запуска сервисов..."
@@ -37,7 +46,7 @@ sleep 30
 
 # Проверяем статус сервисов
 echo "🔍 Проверка статуса сервисов..."
-docker-compose ps
+$DOCKER_COMPOSE_CMD ps
 
 echo ""
 echo "🎉 Neuro Store запущен!"
@@ -60,4 +69,4 @@ echo "   • /docs/erd.md - схема базы данных"
 echo "   • /db/ddl.sql - структура БД"
 echo "   • /db/triggers.sql - триггеры и процедуры"
 echo ""
-echo "🛑 Для остановки выполните: cd ops && docker-compose down"
+echo "🛑 Для остановки выполните: cd ops && $DOCKER_COMPOSE_CMD down"

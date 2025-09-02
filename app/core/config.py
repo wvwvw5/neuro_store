@@ -3,10 +3,12 @@
 """
 
 from typing import List, Union
-from pydantic import AnyHttpUrl, BaseSettings, validator
+from pydantic import AnyHttpUrl, validator
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    model_config = {"extra": "ignore"}
     """Настройки приложения"""
     
     # Настройки API
@@ -14,15 +16,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Neuro Store API"
     
     # Настройки CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
-
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     # Настройки базы данных
     DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/neuro_store"
@@ -44,9 +38,11 @@ class Settings(BaseSettings):
     PAYMENT_API_KEY: str = ""
     PAYMENT_API_URL: str = "https://api.payment-provider.com"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = {
+        "extra": "ignore",
+        "env_file": ".env",
+        "case_sensitive": True
+    }
 
 
 # Создание экземпляра настроек

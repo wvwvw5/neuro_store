@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import ProductCard from '../components/ProductCard';
 import PlanCard from '../components/PlanCard';
 import { Product, Plan } from '../types/product';
@@ -12,11 +13,23 @@ export default function Home() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userToken, setUserToken] = useState<string | null>(null);
 
   // Загрузка продуктов при монтировании
   useEffect(() => {
     fetchProducts();
+    checkAuthStatus();
   }, []);
+
+  const checkAuthStatus = () => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      const tokenType = localStorage.getItem('token_type');
+      setIsAuthenticated(!!token);
+      setUserToken(token);
+    }
+  };
 
   // Загрузка планов при выборе продукта
   useEffect(() => {
@@ -68,6 +81,15 @@ export default function Home() {
       return;
     }
 
+    // Проверяем аутентификацию
+    if (!isAuthenticated || !userToken) {
+      alert('Для создания подписки необходимо войти в систему');
+      window.location.href = '/login';
+      return;
+    }
+
+    const tokenType = localStorage.getItem('token_type') || 'bearer';
+
     try {
       const subscriptionData: SubscriptionCreate = {
         product_id: selectedProduct.id,
@@ -78,15 +100,25 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer YOUR_TOKEN_HERE' // TODO: Добавить реальную аутентификацию
+          'Authorization': `${tokenType} ${userToken}`
         },
         body: JSON.stringify(subscriptionData)
       });
 
-      if (!response.ok) throw new Error('Ошибка создания подписки');
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert('Сессия истекла. Пожалуйста, войдите заново.');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('token_type');
+          window.location.href = '/login';
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Ошибка создания подписки');
+      }
 
       // Успешная подписка
-      alert('Подписка успешно создана!');
+      alert('Подписка успешно создана! Перейдите в личный кабинет для просмотра.');
       setSelectedProduct(null);
       setSelectedPlan(null);
       setPlans([]);
@@ -142,13 +174,29 @@ export default function Home() {
                 <h1 className="text-2xl font-bold text-gray-900">Neuro Store</h1>
               </div>
               <nav className="hidden md:flex space-x-8">
-                <a href="#" className="text-gray-500 hover:text-gray-900">Продукты</a>
-                <a href="#" className="text-gray-500 hover:text-gray-900">Мои подписки</a>
-                <a href="#" className="text-gray-500 hover:text-gray-900">Личный кабинет</a>
+                <Link href="/" className="text-gray-500 hover:text-gray-900">
+                  Продукты
+                </Link>
+                <Link href="/dashboard" className="text-gray-500 hover:text-gray-900">
+                  Мои подписки
+                </Link>
+                <Link href="/dashboard" className="text-gray-500 hover:text-gray-900">
+                  Личный кабинет
+                </Link>
               </nav>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-                Войти
-              </button>
+              {isAuthenticated ? (
+                <Link href="/dashboard">
+                  <span className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md cursor-pointer">
+                    Личный кабинет
+                  </span>
+                </Link>
+              ) : (
+                <Link href="/login">
+                  <span className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md cursor-pointer">
+                    Войти
+                  </span>
+                </Link>
+              )}
             </div>
           </div>
         </header>

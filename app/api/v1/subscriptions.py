@@ -102,7 +102,7 @@ def create_subscription(
     # Списываем средства с баланса
     current_user.balance -= plan.price
     
-    # Создаем заказ и платеж
+    # Создаем заказ
     order = Order(
         user_id=current_user.id,
         product_id=subscription_data.product_id,
@@ -111,6 +111,11 @@ def create_subscription(
         status="completed"
     )
     
+    # Сначала сохраняем заказ, чтобы получить его ID
+    db.add(order)
+    db.flush()  # Получаем ID без коммита
+    
+    # Теперь создаем платеж с правильным order_id
     payment = Payment(
         order_id=order.id,
         user_id=current_user.id,
@@ -120,8 +125,8 @@ def create_subscription(
         payment_date=datetime.utcnow()
     )
     
+    # Добавляем все остальное
     db.add(subscription)
-    db.add(order)
     db.add(payment)
     db.commit()
     

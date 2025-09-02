@@ -83,7 +83,7 @@ docker compose -f ops/docker-compose.yml up --build
 
 - **Backend (FastAPI):** [http://localhost:8000](http://localhost:8000/)
 - **Swagger UI:** <http://localhost:8000/docs>
-- **PostgreSQL:** localhost:5432
+- **PostgreSQL:** localhost:5433
 - **pgAdmin:** [http://localhost:5050](http://localhost:5050/)
 - **Frontend (Next.js):** [http://localhost:3000](http://localhost:3000/)
 

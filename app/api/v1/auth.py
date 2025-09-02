@@ -5,13 +5,39 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import verify_password, create_access_token, get_password_hash
+from app.core.security import verify_password, create_access_token, get_password_hash, verify_token
 from app.models.user import User
 from app.schemas.auth import UserLogin, Token, UserCreate, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["Аутентификация"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+
+async def get_current_user_from_token(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """Получение текущего пользователя из токена"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Не удалось проверить учетные данные",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        payload = verify_token(token)
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except Exception:
+        raise credentials_exception
+    
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        raise credentials_exception
+    
+    return user
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -93,29 +119,3 @@ def get_current_user(
         is_active=current_user.is_active,
         created_at=current_user.created_at
     )
-
-
-async def get_current_user_from_token(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> User:
-    """Получение текущего пользователя из токена"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Не удалось проверить учетные данные",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    
-    try:
-        payload = verify_token(token)
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except Exception:
-        raise credentials_exception
-    
-    user = db.query(User).filter(User.email == email).first()
-    if user is None:
-        raise credentials_exception
-    
-    return user
