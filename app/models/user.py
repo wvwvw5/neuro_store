@@ -2,7 +2,7 @@
 Модель пользователя
 """
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Numeric, String
+from sqlalchemy import Integer, Boolean, Column, DateTime, Numeric, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -14,7 +14,7 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(
         String(255),
         unique=True,

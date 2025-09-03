@@ -26,12 +26,13 @@ from app.models.user import User
 from app.models.user_role import UserRole
 
 # Настройка тестовой базы данных в памяти
-SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
+SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
 
 test_engine = create_engine(
     SQLALCHEMY_TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
+    echo=False,  # Отключаем SQL логи для тестов
 )
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
@@ -48,18 +49,25 @@ def event_loop():
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
     """Создание тестовой сессии БД с откатом после каждого теста"""
-    # Создаем таблицы
-    Base.metadata.create_all(bind=test_engine)
-
-    # Создаем сессию
-    session = TestingSessionLocal()
-
     try:
+        # Создаем таблицы
+        Base.metadata.create_all(bind=test_engine)
+
+        # Создаем сессию
+        session = TestingSessionLocal()
+
         yield session
+    except Exception as e:
+        print(f"Error in db_session fixture: {e}")
+        raise
     finally:
-        session.close()
-        # Очищаем таблицы после теста
-        Base.metadata.drop_all(bind=test_engine)
+        try:
+            session.close()
+            # Очищаем таблицы после теста
+            Base.metadata.drop_all(bind=test_engine)
+        except Exception as e:
+            print(f"Error cleaning up db_session fixture: {e}")
+            # Не блокируем тесты при ошибках очистки
 
 
 @pytest.fixture(scope="function")
@@ -69,6 +77,9 @@ def override_get_db(db_session: Session):
     def _override_get_db():
         try:
             yield db_session
+        except Exception as e:
+            print(f"Error in override_get_db: {e}")
+            raise
         finally:
             pass
 
@@ -76,11 +87,22 @@ def override_get_db(db_session: Session):
 
 
 @pytest.fixture(scope="function")
-def test_app(override_get_db):
+def test_app(override_get_db, override_get_redis, override_get_limiter):
     """Создание тестового приложения"""
-    app.dependency_overrides[get_db] = override_get_db
-    yield app
-    app.dependency_overrides.clear()
+    from app.services.cache import get_redis
+    from app.core.limiter import get_limiter
+    from app.main import create_application
+    
+    # Создаем новое приложение для тестов без инициализации внешних сервисов
+    test_app = create_application()
+    
+    # Переопределяем зависимости
+    test_app.dependency_overrides[get_db] = override_get_db
+    test_app.dependency_overrides[get_redis] = override_get_redis
+    test_app.dependency_overrides[get_limiter] = override_get_limiter
+    
+    yield test_app
+    test_app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="function")
@@ -102,69 +124,111 @@ def fake_redis():
     """Создание fake Redis для тестов"""
     return fakeredis.FakeRedis()
 
+@pytest.fixture(scope="function")
+def override_get_redis(fake_redis):
+    """Переопределение зависимости get_redis для тестов"""
+    from app.services.cache import get_redis
+    
+    async def _override_get_redis():
+        return fake_redis
+    
+    return _override_get_redis
+
+@pytest.fixture(scope="function")
+def override_get_limiter():
+    """Переопределение зависимости get_limiter для тестов"""
+    
+    async def _override_get_limiter():
+        # Возвращаем заглушку вместо rate limiter
+        class MockRateLimiter:
+            def __init__(self):
+                pass
+            
+            async def __call__(self, request):
+                return True  # Всегда разрешаем
+        
+        return MockRateLimiter()
+    
+    return _override_get_limiter
+
 
 @pytest.fixture(scope="function")
 def test_user(db_session: Session) -> User:
     """Создание тестового пользователя"""
-    user = User(
-        email="test@example.com",
-        password_hash=get_password_hash("testpass123"),
-        first_name="Тест",
-        last_name="Пользователь",
-        balance=1000.00,
-        is_active=True,
-        is_verified=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
+    try:
+        user = User(
+            email="test@example.com",
+            password_hash=get_password_hash("testpass123"),
+            first_name="Тест",
+            last_name="Пользователь",
+            balance=1000.00,
+            is_active=True,
+            is_verified=True,
+        )
+        db_session.add(user)
+        db_session.commit()
+        db_session.refresh(user)
+        return user
+    except Exception as e:
+        print(f"Error creating test_user: {e}")
+        db_session.rollback()
+        raise
 
 
 @pytest.fixture(scope="function")
 def test_admin(db_session: Session) -> User:
     """Создание тестового администратора"""
-    # Создаем роль админа
-    admin_role = Role(name="admin", description="Администратор системы", is_active=True)
-    db_session.add(admin_role)
-    db_session.flush()
+    try:
+        # Создаем роль админа
+        admin_role = Role(name="admin", description="Администратор системы", is_active=True)
+        db_session.add(admin_role)
+        db_session.flush()
 
-    # Создаем пользователя-админа
-    admin_user = User(
-        email="admin@example.com",
-        password_hash=get_password_hash("adminpass123"),
-        first_name="Админ",
-        last_name="Тестовый",
-        balance=10000.00,
-        is_active=True,
-        is_verified=True,
-    )
-    db_session.add(admin_user)
-    db_session.flush()
+        # Создаем пользователя-админа
+        admin_user = User(
+            email="admin@example.com",
+            password_hash=get_password_hash("adminpass123"),
+            first_name="Админ",
+            last_name="Тестовый",
+            balance=10000.00,
+            is_active=True,
+            is_verified=True,
+        )
+        db_session.add(admin_user)
+        db_session.flush()
 
-    # Назначаем роль
-    user_role = UserRole(user_id=admin_user.id, role_id=admin_role.id)
-    db_session.add(user_role)
-    db_session.commit()
+        # Назначаем роль
+        user_role = UserRole(user_id=admin_user.id, role_id=admin_role.id)
+        db_session.add(user_role)
+        db_session.commit()
 
-    db_session.refresh(admin_user)
-    return admin_user
+        db_session.refresh(admin_user)
+        return admin_user
+    except Exception as e:
+        print(f"Error creating test_admin: {e}")
+        db_session.rollback()
+        raise
 
 
 @pytest.fixture(scope="function")
 def test_product(db_session: Session) -> Product:
     """Создание тестового продукта"""
-    product = Product(
-        name="Test AI",
-        description="Тестовая нейросеть",
-        category="Тестирование",
-        api_endpoint="https://api.test.com/v1/test",
-        is_active=True,
-    )
-    db_session.add(product)
-    db_session.commit()
-    db_session.refresh(product)
-    return product
+    try:
+        product = Product(
+            name="Test AI",
+            description="Тестовая нейросеть",
+            category="Тестирование",
+            api_endpoint="https://api.test.com/v1/test",
+            is_active=True,
+        )
+        db_session.add(product)
+        db_session.commit()
+        db_session.refresh(product)
+        return product
+    except Exception as e:
+        print(f"Error creating test_product: {e}")
+        db_session.rollback()
+        raise
 
 
 @pytest.fixture(scope="function")

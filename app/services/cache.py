@@ -17,6 +17,13 @@ logger = get_logger("neuro_store.cache")
 redis_client: Optional[redis.Redis] = None
 
 
+async def get_redis() -> redis.Redis:
+    """Получение Redis клиента для dependency injection"""
+    if not redis_client:
+        await init_cache()
+    return redis_client
+
+
 async def init_cache() -> None:
     """Инициализация подключения к Redis для кэширования"""
     global redis_client

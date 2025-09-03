@@ -126,3 +126,9 @@ def get_limiter_from_settings(setting_name: str, default: str = "20/minute"):
     rate_limit_str = getattr(settings, setting_name, default)
     times, seconds = parse_rate_limit(rate_limit_str)
     return create_rate_limiter(times=times, seconds=seconds)
+
+
+async def get_limiter():
+    """Получение rate limiter для dependency injection"""
+    # Возвращаем стандартный лимитер
+    return get_default_limiter()
