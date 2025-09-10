@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class BalanceTopUpRequest(BaseModel):
@@ -19,7 +19,8 @@ class BalanceTopUpRequest(BaseModel):
         None, description="Телефон для SMS (если отличается от профиля)"
     )
 
-    @validator("card_number")
+    @field_validator("card_number")
+    @classmethod
     def validate_card_number(cls, v):
         # Убираем пробелы и дефисы
         v = v.replace(" ", "").replace("-", "")
@@ -27,7 +28,8 @@ class BalanceTopUpRequest(BaseModel):
             raise ValueError("Номер карты должен содержать только цифры")
         return v
 
-    @validator("cvv")
+    @field_validator("cvv")
+    @classmethod
     def validate_cvv(cls, v):
         if not v.isdigit():
             raise ValueError("CVV должен содержать только цифры")

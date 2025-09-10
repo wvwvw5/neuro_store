@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String
+from sqlalchemy import Integer, Column, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -10,19 +10,19 @@ class Payment(Base):
 
     __tablename__ = "payments"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     order_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("orders.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
         unique=True,
-        comment="ID заказа",
+        comment="ID заказа"
     )
     user_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("users.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID пользователя",
+        comment="ID пользователя"
     )
     amount = Column(Numeric(12, 2), nullable=False, comment="Сумма платежа")
     currency = Column(String(3), default="RUB", comment="Валюта платежа")
@@ -39,7 +39,7 @@ class Payment(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        comment="Дата обновления",
+        comment="Дата обновления"
     )
 
     # Связи

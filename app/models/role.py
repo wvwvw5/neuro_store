@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, String, Text
+from sqlalchemy import Integer, Boolean, Column, DateTime, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -10,7 +10,7 @@ class Role(Base):
 
     __tablename__ = "roles"
 
-    id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String(50), unique=True, nullable=False, comment="Название роли")
     description = Column(Text, comment="Описание роли")
     is_active = Column(Boolean, default=True, comment="Активна ли роль")
@@ -21,7 +21,7 @@ class Role(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        comment="Дата обновления",
+        comment="Дата обновления"
     )
 
     # Связи

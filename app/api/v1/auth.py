@@ -3,11 +3,11 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.limiter import get_limiter
 from app.core.logging_config import get_logger, log_auth_event
 from app.core.security import (
     create_access_token,
@@ -18,7 +18,7 @@ from app.core.security import (
 from app.models.role import Role
 from app.models.user import User
 from app.models.user_role import UserRole
-from app.schemas.auth import Token, UserCreate, UserResponse
+from app.schemas.auth import Token, UserCreate, UserResponse, UserLogin
 
 logger = get_logger("neuro_store.auth")
 
@@ -69,7 +69,7 @@ async def get_current_user_from_token(
 async def register(
     user_data: UserCreate,
     db: Session = Depends(get_db),
-    _: None = Depends(RateLimiter(times=3, seconds=60)),
+    limiter = Depends(get_limiter),
 ) -> Any:
     """Регистрация нового пользователя с rate limiting"""
     try:
@@ -135,7 +135,7 @@ async def register(
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
-    _: None = Depends(RateLimiter(times=5, seconds=60)),
+    limiter = Depends(get_limiter),
 ) -> Any:
     """Вход в систему с rate limiting"""
     try:
@@ -175,6 +175,64 @@ async def login(
         raise
     except Exception as e:
         logger.error("Login error", email=form_data.username, error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка входа в систему",
+        )
+
+
+@router.post(
+    "/login-json",
+    response_model=Token,
+    summary="Вход в систему (JSON)",
+    description="Аутентификация пользователя через JSON с email и паролем",
+)
+async def login_json(
+    user_data: UserLogin,
+    db: Session = Depends(get_db),
+    limiter = Depends(get_limiter),
+) -> Any:
+    """Вход в систему через JSON (для frontend)"""
+    try:
+        logger.info("JSON Login attempt", email=user_data.email)
+
+        # Ищем пользователя по email
+        user = db.query(User).filter(User.email == user_data.email).first()
+
+        if not user or not verify_password(user_data.password, user.password_hash):
+            log_auth_event(
+                "login", user_data.email, False, {"reason": "invalid_credentials"}
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Неверный email или пароль",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not user.is_active:
+            log_auth_event(
+                "login", user_data.email, False, {"reason": "account_inactive"}
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Аккаунт деактивирован",
+            )
+
+        # Создаем токен доступа
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.email}, expires_delta=access_token_expires
+        )
+
+        log_auth_event("login", user_data.email, True, {"user_id": user.id})
+        logger.info("User logged in successfully", user_id=user.id, email=user.email)
+
+        return Token(access_token=access_token, token_type="bearer")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("JSON Login error", email=user_data.email, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ошибка входа в систему",

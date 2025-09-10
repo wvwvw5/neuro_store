@@ -1,10 +1,9 @@
 from sqlalchemy import (
-    BigInteger,
+    Integer,
     Boolean,
     Column,
     DateTime,
     ForeignKey,
-    Integer,
     String,
 )
 from sqlalchemy.orm import relationship
@@ -18,24 +17,24 @@ class Subscription(Base):
 
     __tablename__ = "subscriptions"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("users.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID пользователя",
+        comment="ID пользователя"
     )
     product_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("products.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID продукта",
+        comment="ID продукта"
     )
     plan_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("plans.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID плана",
+        comment="ID плана"
     )
     status = Column(
         String(50), nullable=False, default="active", comment="Статус подписки"
@@ -55,7 +54,7 @@ class Subscription(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        comment="Дата обновления",
+        comment="Дата обновления"
     )
 
     # Связи

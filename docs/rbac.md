@@ -119,7 +119,7 @@ async def get_current_user(token: str = Depends(security)) -> User:
 
 ```python
 # app/api/deps.py
-from app.core.rbac import check_role_permission
+from app.dependencies.roles import require_role
 from app.models.role import Role
 
 def require_role(required_role: str):
@@ -182,7 +182,7 @@ async def get_products(
 
 ```python
 # app/services/product_service.py
-from app.core.rbac import check_ownership
+from app.dependencies.roles import check_user_permissions
 
 class ProductService:
     async def update_product(

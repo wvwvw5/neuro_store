@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Integer, Column, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -10,23 +10,23 @@ class UserRole(Base):
 
     __tablename__ = "user_roles"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("users.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID пользователя",
+        comment="ID пользователя"
     )
     role_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("roles.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID роли",
+        comment="ID роли"
     )
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
-        comment="Дата назначения роли",
+        comment="Дата назначения роли"
     )
 
     # Связи

@@ -69,7 +69,7 @@ export default function Dashboard() {
         
         if (rolesResponse.ok) {
           const rolesData = await rolesResponse.json();
-          const isAdmin = rolesData.some((role: any) => role.role_name === 'admin');
+          const isAdmin = rolesData.is_admin || (rolesData.roles && rolesData.roles.some((role: any) => role.role_name === 'admin'));
           userData.is_admin = isAdmin;
         }
       } catch (err) {

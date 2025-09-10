@@ -63,9 +63,9 @@ classDiagram
     class Core {
         +config.py
         +security.py
-        +rbac.py
+        +exceptions.py
         +limiter.py
-        +logging.py
+        +logging_config.py
     }
     
     class API {
@@ -254,7 +254,7 @@ erDiagram
 - **Безопасность:** RSA ключи, короткое время жизни access токенов
 
 **RBAC система**
-- **Реализация:** `app/core/rbac.py`
+- **Реализация:** `app/dependencies/roles.py`
 - **Роли:** admin, moderator, user, viewer
 - **Проверка:** Dependency injection в FastAPI эндпоинтах
 
@@ -298,7 +298,7 @@ erDiagram
 - **Контекст:** User ID, Request ID, Endpoint
 
 ```python
-# app/core/logging.py
+# app/core/logging_config.py
 import structlog
 
 logger = structlog.get_logger()

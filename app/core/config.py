@@ -23,13 +23,13 @@ class Settings(BaseSettings):
 
     # Настройки базы данных
     DATABASE_URL: str = (
-        "postgresql+psycopg2://postgres:postgres@localhost:5432/neuro_store"
+        "postgresql+psycopg2://postgres:postgres@localhost:5433/neuro_store"
     )
     DATABASE_URL_ASYNC: str = (
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/neuro_store"
+        "postgresql+asyncpg://postgres:postgres@localhost:5433/neuro_store"
     )
     TEST_DATABASE_URL: str = (
-        "postgresql+psycopg2://postgres:postgres@localhost:5432/neuro_store_test"
+        "postgresql+psycopg2://postgres:postgres@localhost:5433/neuro_store_test"
     )
 
     # Настройки безопасности

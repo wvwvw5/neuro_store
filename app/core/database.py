@@ -1,36 +1,47 @@
 """
-Настройка базы данных
+Настройки базы данных для Neuro Store
 """
 
+from typing import Generator
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
 
-# Синхронный движок для миграций
-engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True, echo=False)
+# Создание движка базы данных
+if settings.APP_ENV == "test":
+    # Для тестов используем SQLite в памяти
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    # Для production/development используем PostgreSQL
+    engine = create_engine(
+        settings.DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=10,
+        max_overflow=20,
+    )
 
-# Асинхронный движок для API
-async_engine = create_async_engine(
-    settings.DATABASE_URL_ASYNC, pool_pre_ping=True, echo=False
-)
-
-# Синхронная сессия
+# Создание фабрики сессий
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Асинхронная сессия
-AsyncSessionLocal = sessionmaker(
-    async_engine, class_=AsyncSession, expire_on_commit=False
-)
 
 # Базовый класс для моделей
 Base = declarative_base()
 
 
-def get_db():
-    """Получение синхронной сессии БД"""
+def get_db() -> Generator[Session, None, None]:
+    """
+    Dependency для получения сессии базы данных
+    
+    Yields:
+        Session: Сессия базы данных
+    """
     db = SessionLocal()
     try:
         yield db
@@ -38,7 +49,11 @@ def get_db():
         db.close()
 
 
-async def get_async_db():
-    """Получение асинхронной сессии БД"""
-    async with AsyncSessionLocal() as session:
-        yield session
+def create_tables() -> None:
+    """Создание всех таблиц в базе данных"""
+    Base.metadata.create_all(bind=engine)
+
+
+def drop_tables() -> None:
+    """Удаление всех таблиц из базы данных"""
+    Base.metadata.drop_all(bind=engine)

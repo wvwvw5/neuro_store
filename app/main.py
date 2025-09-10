@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from app.api.v1 import admin, auth, payments, products, roles, subscriptions
+from app.api import api_router
 from app.core.config import settings
 from app.core.exceptions import (
     NeuroStoreException,
@@ -147,12 +147,7 @@ def create_application() -> FastAPI:
     app.add_exception_handler(Exception, generic_exception_handler)
 
     # Подключение API роутеров
-    app.include_router(auth.router, prefix=settings.API_V1_STR)
-    app.include_router(products.router, prefix=settings.API_V1_STR)
-    app.include_router(subscriptions.router, prefix=settings.API_V1_STR)
-    app.include_router(admin.router, prefix=settings.API_V1_STR)
-    app.include_router(roles.router, prefix=settings.API_V1_STR)
-    app.include_router(payments.router, prefix=settings.API_V1_STR)
+    app.include_router(api_router, prefix=settings.API_V1_STR)
 
     return app
 
@@ -209,27 +204,7 @@ async def health_check():
     return health_status
 
 
-@app.get(
-    "/api/v1/health",
-    summary="Проверка здоровья API v1",
-    description="Проверка состояния API версии 1",
-    tags=["Мониторинг"],
-)
-async def api_health_check():
-    """Проверка здоровья API v1"""
-    return {
-        "status": "healthy",
-        "api_version": "v1",
-        "timestamp": time.time(),
-        "endpoints": {
-            "auth": "✅ Доступна",
-            "products": "✅ Доступна",
-            "subscriptions": "✅ Доступна",
-            "admin": "✅ Доступна",
-            "roles": "✅ Доступна",
-            "payments": "✅ Доступна",
-        },
-    }
+
 
 
 if __name__ == "__main__":

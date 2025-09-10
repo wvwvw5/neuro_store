@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, BigInteger, Column, DateTime, String, Text
+from sqlalchemy import JSON, Integer, Column, DateTime, String, Text
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -9,13 +9,13 @@ class AuditLog(Base):
 
     __tablename__ = "audit_log"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     table_name = Column(String(100), nullable=False, comment="Название таблицы")
-    record_id = Column(BigInteger, comment="ID записи")
+    record_id = Column(Integer, comment="ID записи")
     operation = Column(
         String(20), nullable=False, comment="Тип операции (INSERT/UPDATE/DELETE)"
     )
-    user_id = Column(BigInteger, comment="ID пользователя, выполнившего операцию")
+    user_id = Column(Integer, comment="ID пользователя, выполнившего операцию")
     old_values = Column(JSON, comment="Старые значения (JSON)")
     new_values = Column(JSON, comment="Новые значения (JSON)")
     timestamp = Column(

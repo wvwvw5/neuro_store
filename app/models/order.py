@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String, Text
+from sqlalchemy import Integer, Column, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -10,24 +10,24 @@ class Order(Base):
 
     __tablename__ = "orders"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("users.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID пользователя",
+        comment="ID пользователя"
     )
     product_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("products.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=True,
-        comment="ID продукта (NULL для пополнения баланса)",
+        comment="ID продукта (NULL для пополнения баланса)"
     )
     plan_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("plans.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=True,
-        comment="ID плана (NULL для пополнения баланса)",
+        comment="ID плана (NULL для пополнения баланса)"
     )
     status = Column(
         String(50), nullable=False, default="pending", comment="Статус заказа"
@@ -42,7 +42,7 @@ class Order(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        comment="Дата обновления",
+        comment="Дата обновления"
     )
 
     # Связи

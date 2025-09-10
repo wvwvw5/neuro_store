@@ -36,8 +36,8 @@
 | Требование | Как реализовано | Файлы/модули | Статус |
 |------------|----------------|---------------|---------|
 | JWT аутентификация | Access/Refresh токены | `app/core/security.py` | ✅ |
-| Ролевая модель (3+ роли) | admin, moderator, user, viewer | `app/models/role.py`, `app/core/rbac.py` | ✅ |
-| RBAC разграничение | Проверка ролей на уровне эндпоинтов | `app/api/deps.py` | ✅ |
+| Ролевая модель (3+ роли) | admin, moderator, user, viewer | `app/models/role.py`, `app/dependencies/roles.py` | ✅ |
+| RBAC разграничение | Проверка ролей на уровне эндпоинтов | `app/dependencies/roles.py` | ✅ |
 | Rate limiting | Ограничение запросов по IP/пользователю | `app/core/limiter.py` | ✅ |
 | Хеширование паролей | bcrypt с солью | `app/core/security.py` | ✅ |
 | CORS настройки | Конфигурируемые домены | `app/main.py` | ✅ |
@@ -56,12 +56,12 @@
 
 | Требование | Как реализовано | Файлы/модули | Статус |
 |------------|----------------|---------------|---------|
-| Docker контейнеризация | Мульти-сервисная архитектура | `docker-compose.yml`, `Dockerfile.*` | ✅ |
-| pgAdmin | Веб-интерфейс для управления БД | `docker-compose.yml` | ✅ |
+| Docker контейнеризация | Мульти-сервисная архитектура | `ops/docker-compose.yml`, `ops/Dockerfile.*` | ✅ |
+| pgAdmin | Веб-интерфейс для управления БД | `ops/docker-compose.yml` | ✅ |
 | CI/CD пайплайн | GitHub Actions для тестирования | `.github/workflows/` | ✅ |
-| Миграции БД | Alembic с версионированием | `alembic.ini`, `db/migrations/` | ✅ |
+| Миграции БД | Alembic с версионированием | `alembic/`, `alembic.ini` | ✅ |
 | Переменные окружения | .env файлы и конфигурация | `app/core/config.py` | ✅ |
-| Логирование | structlog с JSON форматом | `app/core/logging.py` | ✅ |
+| Логирование | structlog с JSON форматом | `app/core/logging_config.py` | ✅ |
 
 ## Документация
 

@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Integer, Column, DateTime, ForeignKey, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -10,26 +10,26 @@ class ProductPlan(Base):
 
     __tablename__ = "product_plans"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     product_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("products.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID продукта",
+        comment="ID продукта"
     )
     plan_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("plans.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
-        comment="ID плана",
+        comment="ID плана"
     )
     is_available = Column(
-        BigInteger, default=True, comment="Доступен ли план для продукта"
+        Boolean, default=True, comment="Доступен ли план для продукта"
     )
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
-        comment="Дата создания связи",
+        comment="Дата создания связи"
     )
 
     # Связи

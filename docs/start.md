@@ -50,14 +50,21 @@ docker-compose logs -f
 docker-compose exec backend alembic upgrade head
 
 # Проверка статуса миграций
-docker-compose exec backend alembic current
+docker compose -f ops/docker-compose.yml exec backend alembic current
 ```
 
 ### 5. Создание первого пользователя
 
 ```bash
-# Создание администратора
-docker-compose exec backend python -m app.scripts.create_admin
+# Создание администратора (через API)
+curl -X POST "http://localhost:8000/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@neurostore.com",
+    "username": "admin",
+    "password": "admin123",
+    "full_name": "Администратор"
+  }'
 
 # Или через API
 curl -X POST "http://localhost:8000/api/v1/auth/register" \
@@ -374,7 +381,7 @@ alembic upgrade head --sql
 
 ```bash
 # В Docker Compose
-docker-compose exec backend alembic upgrade head
+docker compose -f ops/docker-compose.yml exec backend alembic upgrade head
 
 # В CI/CD пайплайне
 - name: Run migrations
@@ -439,10 +446,10 @@ crontab -e
 
 ```bash
 # Создание бэкапа
-docker-compose exec postgres pg_dump -U neuro_user neuro_store > backup.sql
+docker compose -f ops/docker-compose.yml exec postgres pg_dump -U neuro_user neuro_store > backup.sql
 
 # Восстановление
-docker-compose exec -T postgres psql -U neuro_user neuro_store < backup.sql
+docker compose -f ops/docker-compose.yml exec -T postgres psql -U neuro_user neuro_store < backup.sql
 ```
 
 ## Мониторинг и логи
@@ -451,20 +458,20 @@ docker-compose exec -T postgres psql -U neuro_user neuro_store < backup.sql
 
 ```bash
 # Просмотр логов backend
-docker-compose logs -f backend
+docker compose -f ops/docker-compose.yml logs -f backend
 
 # Просмотр логов конкретного сервиса
-docker-compose logs -f postgres
+docker compose -f ops/docker-compose.yml logs -f postgres
 
 # Поиск по логам
-docker-compose logs backend | grep ERROR
+docker compose -f ops/docker-compose.yml logs backend | grep ERROR
 ```
 
 ### 2. Логи базы данных
 
 ```bash
 # Подключение к PostgreSQL
-docker-compose exec postgres psql -U neuro_user -d neuro_store
+docker compose -f ops/docker-compose.yml exec postgres psql -U neuro_user -d neuro_store
 
 # Включение логирования
 ALTER SYSTEM SET log_statement = 'all';
@@ -472,7 +479,7 @@ ALTER SYSTEM SET log_min_duration_statement = 1000;
 SELECT pg_reload_conf();
 
 # Просмотр логов
-docker-compose exec postgres tail -f /var/log/postgresql/postgresql-15-main.log
+docker compose -f ops/docker-compose.yml exec postgres tail -f /var/log/postgresql/postgresql-15-main.log
 ```
 
 ### 3. Мониторинг производительности
@@ -495,10 +502,10 @@ docker system prune -a
 curl http://localhost:8000/health
 
 # Проверка подключения к БД
-docker-compose exec postgres pg_isready -U neuro_user
+docker compose -f ops/docker-compose.yml exec postgres pg_isready -U neuro_user
 
 # Проверка Redis
-docker-compose exec redis redis-cli ping
+docker compose -f ops/docker-compose.yml exec redis redis-cli ping
 ```
 
 ## FAQ и устранение неполадок
@@ -577,26 +584,26 @@ environment:
 
 ```bash
 # В контейнере
-docker-compose exec backend env
+docker compose -f ops/docker-compose.yml exec backend env
 
 # Проверка конфигурации
-docker-compose exec backend python -c "from app.core.config import settings; print(settings.dict())"
+docker compose -f ops/docker-compose.yml exec backend python -c "from app.core.config import settings; print(settings.dict())"
 ```
 
 #### 3. Тестирование подключений
 
 ```bash
 # Тест подключения к БД
-docker-compose exec backend python -c "
-from app.db.session import engine
+docker compose -f ops/docker-compose.yml exec backend python -c "
+from app.core.database import get_db
 from sqlalchemy import text
-with engine.connect() as conn:
-    result = conn.execute(text('SELECT 1'))
-    print('Database connection OK')
+db = next(get_db())
+result = db.execute(text('SELECT 1'))
+print('Database connection OK')
 "
 
 # Тест подключения к Redis
-docker-compose exec backend python -c "
+docker compose -f ops/docker-compose.yml exec backend python -c "
 import redis
 r = redis.Redis.from_url('redis://redis:6379')
 print('Redis connection OK:', r.ping())
@@ -684,16 +691,16 @@ uvicorn app.main:app --ssl-keyfile=key.pem --ssl-certfile=cert.pem
 
 ```bash
 # Запуск в фоновом режиме
-docker-compose up -d
+docker compose -f ops/docker-compose.yml up -d
 
 # Остановка
-docker-compose down
+docker compose -f ops/docker-compose.yml down
 
 # Перезапуск
-docker-compose restart
+docker compose -f ops/docker-compose.yml restart
 
 # Просмотр логов
-docker-compose logs -f
+docker compose -f ops/docker-compose.yml logs -f
 ```
 
 ### Управление базой данных
@@ -703,7 +710,7 @@ docker-compose logs -f
 docker-compose exec postgres psql -U neuro_user -d neuro_store
 
 # Применение миграций
-docker-compose exec backend alembic upgrade head
+docker compose -f ops/docker-compose.yml exec backend alembic upgrade head
 
 # Создание бэкапа
 docker-compose exec postgres pg_dump -U neuro_user neuro_store > backup.sql
@@ -713,20 +720,20 @@ docker-compose exec postgres pg_dump -U neuro_user neuro_store > backup.sql
 
 ```bash
 # Перезапуск backend
-docker-compose restart backend
+docker compose -f ops/docker-compose.yml restart backend
 
 # Просмотр переменных окружения
-docker-compose exec backend env
+docker compose -f ops/docker-compose.yml exec backend env
 
 # Выполнение команд в контейнере
-docker-compose exec backend python -c "print('Hello from container')"
+docker compose -f ops/docker-compose.yml exec backend python -c "print('Hello from container')"
 ```
 
 ### Мониторинг
 
 ```bash
 # Статус сервисов
-docker-compose ps
+docker compose -f ops/docker-compose.yml ps
 
 # Использование ресурсов
 docker stats

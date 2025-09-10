@@ -1,9 +1,8 @@
 from sqlalchemy import (
-    BigInteger,
+    Integer,
     Boolean,
     Column,
     DateTime,
-    Integer,
     Numeric,
     String,
     Text,
@@ -19,7 +18,7 @@ class Plan(Base):
 
     __tablename__ = "plans"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, comment="Название плана")
     description = Column(Text, comment="Описание плана")
     price = Column(Numeric(12, 2), nullable=False, comment="Цена плана")
@@ -34,7 +33,7 @@ class Plan(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        comment="Дата обновления",
+        comment="Дата обновления"
     )
 
     # Связи

@@ -1,279 +1,217 @@
 """
-Единые обработчики ошибок для Neuro Store API
+Кастомные исключения для Neuro Store
 """
 
-import uuid
-from typing import Any, Dict
-
 from fastapi import HTTPException, Request, status
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from typing import Any, Dict, Optional
+from pydantic import ValidationError
 from jose import JWTError
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from app.core.logging_config import log_error
+from app.core.logging_config import get_logger
+
+logger = get_logger("neuro_store.exceptions")
 
 
 class NeuroStoreException(Exception):
     """Базовое исключение для Neuro Store"""
-
-    def __init__(self, message: str, details: Dict[str, Any] = None):
+    
+    def __init__(
+        self,
+        message: str,
+        status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        details: Optional[Dict[str, Any]] = None
+    ):
         self.message = message
+        self.status_code = status_code
         self.details = details or {}
         super().__init__(self.message)
 
 
 class AuthenticationError(NeuroStoreException):
     """Ошибка аутентификации"""
-
-    pass
+    
+    def __init__(self, message: str = "Ошибка аутентификации", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_401_UNAUTHORIZED, details)
 
 
 class AuthorizationError(NeuroStoreException):
     """Ошибка авторизации"""
-
-    pass
+    
+    def __init__(self, message: str = "Недостаточно прав", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_403_FORBIDDEN, details)
 
 
 class ValidationError(NeuroStoreException):
     """Ошибка валидации данных"""
-
-    pass
-
-
-class BusinessLogicError(NeuroStoreException):
-    """Ошибка бизнес-логики"""
-
-    pass
+    
+    def __init__(self, message: str = "Ошибка валидации", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_422_UNPROCESSABLE_ENTITY, details)
 
 
-def create_error_response(
-    error_type: str,
-    message: str,
-    status_code: int = 500,
-    details: Dict[str, Any] = None,
-    request_id: str = None,
-) -> JSONResponse:
-    """Создание единообразного ответа об ошибке"""
-
-    if not request_id:
-        request_id = str(uuid.uuid4())
-
-    error_response = {
-        "error": {
-            "type": error_type,
-            "message": message,
-            "details": details or {},
-            "request_id": request_id,
-        }
-    }
-
-    return JSONResponse(status_code=status_code, content=error_response)
+class NotFoundError(NeuroStoreException):
+    """Ресурс не найден"""
+    
+    def __init__(self, message: str = "Ресурс не найден", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_404_NOT_FOUND, details)
 
 
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    """Обработчик HTTP исключений"""
-    request_id = str(uuid.uuid4())
+class ConflictError(NeuroStoreException):
+    """Конфликт данных"""
+    
+    def __init__(self, message: str = "Конфликт данных", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_409_CONFLICT, details)
 
-    # Логируем ошибку
-    log_error(
-        error_type="HTTPException",
-        error_message=exc.detail,
-        request_id=request_id,
-        details={
-            "status_code": exc.status_code,
-            "url": str(request.url),
-            "method": request.method,
-        },
-    )
 
-    return create_error_response(
-        error_type="HTTPException",
-        message=exc.detail,
+class RateLimitError(NeuroStoreException):
+    """Превышен лимит запросов"""
+    
+    def __init__(self, message: str = "Превышен лимит запросов", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_429_TOO_MANY_REQUESTS, details)
+
+
+class DatabaseError(NeuroStoreException):
+    """Ошибка базы данных"""
+    
+    def __init__(self, message: str = "Ошибка базы данных", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_500_INTERNAL_SERVER_ERROR, details)
+
+
+class CacheError(NeuroStoreException):
+    """Ошибка кэширования"""
+    
+    def __init__(self, message: str = "Ошибка кэширования", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_500_INTERNAL_SERVER_ERROR, details)
+
+
+class ExternalServiceError(NeuroStoreException):
+    """Ошибка внешнего сервиса"""
+    
+    def __init__(self, message: str = "Ошибка внешнего сервиса", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, status.HTTP_502_BAD_GATEWAY, details)
+
+
+def handle_neuro_store_exception(exc: NeuroStoreException) -> HTTPException:
+    """Преобразование кастомного исключения в HTTPException для FastAPI"""
+    return HTTPException(
         status_code=exc.status_code,
-        request_id=request_id,
+        detail={
+            "error": exc.message,
+            "details": exc.details
+        }
     )
 
 
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    """Обработчик ошибок валидации данных"""
-    request_id = str(uuid.uuid4())
-
-    # Преобразуем ошибки валидации в читаемый формат
-    validation_errors = []
-    for error in exc.errors():
-        field_path = " -> ".join(str(loc) for loc in error["loc"])
-        validation_errors.append(
-            {"field": field_path, "message": error["msg"], "type": error["type"]}
-        )
-
-    error_message = "Ошибка валидации входных данных"
-
-    # Логируем ошибку
-    log_error(
-        error_type="ValidationError",
-        error_message=error_message,
-        request_id=request_id,
-        details={
-            "validation_errors": validation_errors,
-            "url": str(request.url),
-            "method": request.method,
-        },
+# Exception handlers for FastAPI
+async def neuro_store_exception_handler(request: Request, exc: NeuroStoreException) -> JSONResponse:
+    """Обработчик кастомных исключений NeuroStore"""
+    logger.error(
+        "NeuroStore exception occurred",
+        error_type=type(exc).__name__,
+        message=exc.message,
+        status_code=exc.status_code,
+        details=exc.details,
+        path=str(request.url.path),
+        method=request.method
+    )
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.message,
+            "details": exc.details,
+            "type": type(exc).__name__
+        }
     )
 
-    return create_error_response(
-        error_type="ValidationError",
-        message=error_message,
+
+async def validation_exception_handler(request: Request, exc: ValidationError) -> JSONResponse:
+    """Обработчик ошибок валидации Pydantic"""
+    logger.warning(
+        "Validation error occurred",
+        path=str(request.url.path),
+        method=request.method,
+        errors=str(exc)
+    )
+    
+    return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        details={"validation_errors": validation_errors},
-        request_id=request_id,
+        content={
+            "error": "Ошибка валидации данных",
+            "details": {"validation_errors": str(exc)}
+        }
     )
 
 
 async def jwt_exception_handler(request: Request, exc: JWTError) -> JSONResponse:
     """Обработчик ошибок JWT"""
-    request_id = str(uuid.uuid4())
-
-    error_message = "Недействительный или истекший токен аутентификации"
-
-    # Логируем ошибку
-    log_error(
-        error_type="JWTError",
-        error_message=error_message,
-        request_id=request_id,
-        details={
-            "jwt_error": str(exc),
-            "url": str(request.url),
-            "method": request.method,
-        },
+    logger.warning(
+        "JWT error occurred",
+        path=str(request.url.path),
+        method=request.method,
+        error=str(exc)
     )
-
-    return create_error_response(
-        error_type="JWTError",
-        message=error_message,
+    
+    return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        request_id=request_id,
+        content={
+            "error": "Ошибка аутентификации",
+            "details": {"jwt_error": "Недействительный токен"}
+        }
     )
 
 
-async def integrity_exception_handler(
-    request: Request, exc: IntegrityError
-) -> JSONResponse:
+async def integrity_exception_handler(request: Request, exc: IntegrityError) -> JSONResponse:
     """Обработчик ошибок целостности БД"""
-    request_id = str(uuid.uuid4())
-
-    error_message = "Нарушение ограничений целостности данных"
-
-    # Пытаемся определить тип ошибки
-    if "unique" in str(exc).lower():
-        error_message = "Запись с такими данными уже существует"
-    elif "foreign key" in str(exc).lower():
-        error_message = "Ссылка на несуществующую запись"
-
-    # Логируем ошибку
-    log_error(
-        error_type="IntegrityError",
-        error_message=error_message,
-        request_id=request_id,
-        details={
-            "db_error": str(exc.orig) if hasattr(exc, "orig") else str(exc),
-            "url": str(request.url),
-            "method": request.method,
-        },
+    logger.error(
+        "Database integrity error occurred",
+        path=str(request.url.path),
+        method=request.method,
+        error=str(exc)
     )
-
-    return create_error_response(
-        error_type="IntegrityError",
-        message=error_message,
-        status_code=status.HTTP_400_BAD_REQUEST,
-        request_id=request_id,
+    
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "error": "Нарушение целостности данных",
+            "details": {"database_error": "Дублирование или связанные данные"}
+        }
     )
 
 
-async def operational_exception_handler(
-    request: Request, exc: OperationalError
-) -> JSONResponse:
+async def operational_exception_handler(request: Request, exc: OperationalError) -> JSONResponse:
     """Обработчик операционных ошибок БД"""
-    request_id = str(uuid.uuid4())
-
-    error_message = "Ошибка подключения к базе данных"
-
-    # Логируем ошибку
-    log_error(
-        error_type="OperationalError",
-        error_message=error_message,
-        request_id=request_id,
-        details={
-            "db_error": str(exc.orig) if hasattr(exc, "orig") else str(exc),
-            "url": str(request.url),
-            "method": request.method,
-        },
+    logger.error(
+        "Database operational error occurred",
+        path=str(request.url.path),
+        method=request.method,
+        error=str(exc)
     )
-
-    return create_error_response(
-        error_type="OperationalError",
-        message=error_message,
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        request_id=request_id,
+    
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": "Ошибка базы данных",
+            "details": {"database_error": "Проблема с подключением или выполнением запроса"}
+        }
     )
 
 
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Общий обработчик всех остальных исключений"""
-    request_id = str(uuid.uuid4())
-
-    error_message = "Внутренняя ошибка сервера"
-
-    # Логируем ошибку
-    log_error(
+    """Обработчик всех остальных исключений"""
+    logger.error(
+        "Unhandled exception occurred",
+        path=str(request.url.path),
+        method=request.method,
         error_type=type(exc).__name__,
-        error_message=str(exc),
-        request_id=request_id,
-        details={
-            "exception_type": type(exc).__name__,
-            "url": str(request.url),
-            "method": request.method,
-            "traceback": str(exc),
-        },
+        error=str(exc)
     )
-
-    return create_error_response(
-        error_type="InternalServerError",
-        message=error_message,
+    
+    return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        request_id=request_id,
-    )
-
-
-async def neuro_store_exception_handler(
-    request: Request, exc: NeuroStoreException
-) -> JSONResponse:
-    """Обработчик кастомных исключений Neuro Store"""
-    request_id = str(uuid.uuid4())
-
-    # Определяем статус код по типу исключения
-    status_code = status.HTTP_400_BAD_REQUEST
-    if isinstance(exc, AuthenticationError):
-        status_code = status.HTTP_401_UNAUTHORIZED
-    elif isinstance(exc, AuthorizationError):
-        status_code = status.HTTP_403_FORBIDDEN
-    elif isinstance(exc, ValidationError):
-        status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    # Логируем ошибку
-    log_error(
-        error_type=type(exc).__name__,
-        error_message=exc.message,
-        request_id=request_id,
-        details=exc.details,
-    )
-
-    return create_error_response(
-        error_type=type(exc).__name__,
-        message=exc.message,
-        status_code=status_code,
-        details=exc.details,
-        request_id=request_id,
+        content={
+            "error": "Внутренняя ошибка сервера",
+            "details": {"error_type": type(exc).__name__}
+        }
     )

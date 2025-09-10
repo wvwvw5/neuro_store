@@ -1,18 +1,32 @@
 """
-Основной API роутер для версии v1
+Системные API эндпоинты
 """
 
+import time
 from fastapi import APIRouter
+from app.core.config import settings
 
-from app.api.v1.endpoints import auth, orders, products, subscriptions, users
+router = APIRouter()
 
-api_router = APIRouter()
 
-# Подключение эндпоинтов
-api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
-api_router.include_router(users.router, prefix="/users", tags=["users"])
-api_router.include_router(products.router, prefix="/products", tags=["products"])
-api_router.include_router(
-    subscriptions.router, prefix="/subscriptions", tags=["subscriptions"]
+@router.get(
+    "/health",
+    summary="Проверка здоровья API v1",
+    description="Проверка состояния API версии 1",
+    tags=["Мониторинг"],
 )
-api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
+async def api_health_check():
+    """Проверка здоровья API v1"""
+    return {
+        "status": "healthy",
+        "api_version": "v1",
+        "timestamp": time.time(),
+        "endpoints": {
+            "auth": "✅ Доступна",
+            "products": "✅ Доступна",
+            "subscriptions": "✅ Доступна",
+            "admin": "✅ Доступна",
+            "roles": "✅ Доступна",
+            "payments": "✅ Доступна",
+        },
+    }

@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, String, Text
+from sqlalchemy import Integer, Boolean, Column, DateTime, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -10,7 +10,7 @@ class Product(Base):
 
     __tablename__ = "products"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, comment="Название продукта")
     description = Column(Text, comment="Описание продукта")
     category = Column(String(100), nullable=False, comment="Категория продукта")

@@ -1,11 +1,11 @@
 from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.limiter import get_limiter
 from app.core.logging_config import get_logger
 from app.dependencies.roles import require_admin
 from app.models.plan import Plan
@@ -44,7 +44,7 @@ async def get_products(
     limit: int = 100,
     category: str = None,
     db: Session = Depends(get_db),
-    _: None = Depends(RateLimiter(times=30, seconds=60)),
+    limiter = Depends(get_limiter),
 ) -> Any:
     """Получение списка всех продуктов с кэшированием"""
     try:
@@ -91,7 +91,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)) -> Any:
 async def get_product_plans(
     product_id: int,
     db: Session = Depends(get_db),
-    _: None = Depends(RateLimiter(times=30, seconds=60)),
+    limiter = Depends(get_limiter),
 ) -> Any:
     """Получение планов для конкретного продукта с кэшированием"""
     try:

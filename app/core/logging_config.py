@@ -4,7 +4,7 @@
 
 import logging
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import structlog
 from structlog.types import FilteringBoundLogger
@@ -105,24 +105,32 @@ def log_request(
 
 
 def log_auth_event(
-    event_type: str, user_email: str, success: bool, details: Dict[str, Any] = None
+    event_type: str,
+    user_email: str,
+    success: bool,
+    details: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ) -> None:
-    """Логирование событий аутентификации"""
+    """
+    Логирование события аутентификации
+    
+    Args:
+        event_type: Тип события (login, register, logout, password_reset)
+        user_email: Email пользователя
+        success: Успешность операции
+        details: Дополнительные детали
+        **kwargs: Дополнительные параметры
+    """
     logger = get_logger("neuro_store.auth")
-
-    log_data = {
-        "event_type": event_type,
-        "user_email": user_email,
-        "success": success,
-    }
-
-    if details:
-        log_data.update(details)
-
-    if success:
-        logger.info("Authentication event", **log_data)
-    else:
-        logger.warning("Authentication failed", **log_data)
+    
+    logger.info(
+        "Authentication Event",
+        event_type=event_type,
+        user_email=user_email,
+        success=success,
+        details=details or {},
+        **kwargs
+    )
 
 
 def log_subscription_event(
